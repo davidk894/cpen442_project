@@ -18,9 +18,9 @@ import java.net.URL;
 public class HttpRequestUtility extends AsyncTask<Void, Void, String> {
 
     private String requestURL;
-    private Context mContext;
     private String JSONString;
     private int requestType;
+    public HttpResponseUtility delegate = null;
 
     public static final int GET_METHOD = 0,
                             POST_METHOD = 1,
@@ -33,8 +33,8 @@ public class HttpRequestUtility extends AsyncTask<Void, Void, String> {
 
     public static final int TIMEOUT = 60 * 1000;
 
-    public HttpRequestUtility(Context ctx) {
-        this.mContext = ctx;
+    public HttpRequestUtility(HttpResponseUtility delegate) {
+        this.delegate = delegate;
     }
 
     @Override
@@ -66,6 +66,13 @@ public class HttpRequestUtility extends AsyncTask<Void, Void, String> {
             e2.printStackTrace();
         }
         return response;
+    }
+
+    @Override
+    protected void onPostExecute(String result) {
+        if(delegate != null) {
+            delegate.processResponse(result);
+        }
     }
 
     // #region setters and getters
@@ -129,4 +136,9 @@ public class HttpRequestUtility extends AsyncTask<Void, Void, String> {
         return response.toString();
     }
     // #endregion request building
+
+    public interface HttpResponseUtility {
+        void processResponse(String response);
+    }
+
 }

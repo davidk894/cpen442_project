@@ -8,9 +8,12 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
+
+import java.util.Map;
 
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
@@ -39,11 +42,27 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
         // Check if message contains a data payload.
         if (remoteMessage.getData().size() > 0) {
+            Map<String, String> data = remoteMessage.getData();
+            StringBuilder msg = new StringBuilder();
+            msg.append("MESSAGE CONTENTS: ");
+            for(String key : data.keySet()) {
+                msg.append(String.format("{%s:%s}, ", key, data.get(key)));
+            }
+            Intent intent = new Intent();
+            intent.setAction("FBMessage");
+            intent.putExtra("message", msg.toString());
+            getBaseContext().sendBroadcast(intent);
             Log.d(TAG, "Message data payload: " + remoteMessage.getData());
         }
 
         // Check if message contains a notification payload.
         if (remoteMessage.getNotification() != null) {
+            String message = remoteMessage.getNotification().getBody();
+            Intent intent = new Intent();
+            intent.setAction("FBMessage");
+            intent.putExtra("message", message);
+            getBaseContext().sendBroadcast(intent);
+//            Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
             Log.d(TAG, "Message Notification Body: " + remoteMessage.getNotification().getBody());
         }
 

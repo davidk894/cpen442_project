@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Secure File Share</string>
+    <string name="preference_file_key">cpen442.securefileshare.PREFERENCE_FILE_KEY</string>
 </resources>
