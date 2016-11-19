@@ -2,14 +2,22 @@ package cpen442.securefileshare;
 
 import android.app.DialogFragment;
 import android.content.Context;
+import android.hardware.fingerprint.FingerprintManager;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 
-public class FingerprintAuthenticationDialogFragment extends DialogFragment {
+public class FingerprintAuthenticationDialogFragment extends DialogFragment
+        implements FingerprintUiHelper.Callback {
+
+    private Context mContext;
+    private FingerprintUiHelper mFingerprintUiHelper;
+    private FingerprintManager.CryptoObject mCryptoObject;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -33,11 +41,35 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment {
                 dismiss();
             }
         });
+
+        mFingerprintUiHelper = new FingerprintUiHelper(
+                mContext.getSystemService(FingerprintManager.class),
+                (ImageView) v.findViewById(R.id.fingerprint_icon),
+                (TextView) v.findViewById(R.id.fingerprint_status), this);
         return v;
     }
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
+
+        mContext = context;
+    }
+
+    /**
+     * Sets the crypto object to be passed in when authenticating with fingerprint.
+     */
+    public void setCryptoObject(FingerprintManager.CryptoObject cryptoObject) {
+        mCryptoObject = cryptoObject;
+    }
+
+    @Override
+    public void onAuthenticated() {
+
+    }
+
+    @Override
+    public void onError() {
+
     }
 }
