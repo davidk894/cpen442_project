@@ -13,6 +13,7 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.SecureRandom;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 
@@ -116,4 +117,13 @@ public class KeyStoreInterface {
         return base64.getBytes(StandardCharsets.UTF_8);
     }
 
+    public static byte[] generateCryptoMessage() {
+        return generateSecureRandom(MESSAGE_SIZE);
+    }
+
+    private static byte[] generateSecureRandom(int numberOfBytes) {
+        byte[] buff = new byte[numberOfBytes];
+        SecureRandom random = new SecureRandom();
+        return buff;
+    }
 }
