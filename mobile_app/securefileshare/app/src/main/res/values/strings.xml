@@ -2,10 +2,17 @@
     <string name="app_name">Secure File Share</string>
 
     <!-- Authentication dialog -->
+    <string name="cancel_button">Cancel</string>
+    <string name="next_button">Next</string>
+    <string name="authenticate">Authenticate</string>
+
+    <!-- SMS related -->
+    <string name="sms_description">Enter SMS Secret</string>
+    <string name="invalid_sms">Please enter SMS Secret</string>
+
+    <!-- Fingerprint related -->
     <string name="fingerprint_hint">Touch sensor</string>
     <string name="fingerprint_description">Confirm fingerprint to continue</string>
-    <string name="cancel_button">CANCEL</string>
-    <string name="authenticate">Authenticate</string>
     <string name="fingerprint_not_recognized">Fingerprint not recognized. Try again</string>
     <string name="fingerprint_success">Fingerprint recognized</string>
 

@@ -24,6 +24,8 @@ import com.google.firebase.iid.FirebaseInstanceId;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import javax.crypto.Cipher;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -114,7 +116,9 @@ public class MainActivity extends AppCompatActivity {
                     JSONObject resp = new JSONObject(response);
                     if(resp.getBoolean("success")) {
                         // Go to authenticator
-                        authenticate();
+                        // We won't be making duplicate accounts
+                        // If there is a duplicate account, we should've gotten the "fail" response
+                        authCreateAccount();
                     } else {
                         // Toast response message
                         String respMsg = resp.getString("responseMessage");
@@ -134,17 +138,26 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Start fingerprint authentication
      */
-    public void authenticate() {
+    public void authCreateAccount() {
+        if(!KeyStoreInterface.keyExists()) {
+            KeyStoreInterface.generateKey();
+        }
+        Cipher cipher = KeyStoreInterface.cipherInit(Cipher.ENCRYPT_MODE);
+        FingerprintManager.CryptoObject cryptoObject = new FingerprintManager.CryptoObject(cipher);
+
         FingerprintAuthenticationDialogFragment fragment = new FingerprintAuthenticationDialogFragment();
+        fragment.setCryptoObject(cryptoObject);
+
         fragment.show(getFragmentManager(), DIALOG_FRAGMENT_TAG);
     }
 
     /**
      * Fingerprint authentication complete, now build request to server
+     * @param smsSecret
      * @param withFingerprint
      * @param cryptoObject
      */
-    public void onAuthenticated(boolean withFingerprint,
+    public void onAuthenticated(String smsSecret, boolean withFingerprint,
                                 @Nullable FingerprintManager.CryptoObject cryptoObject) {
         if(withFingerprint) {
             assert cryptoObject != null;
@@ -197,10 +210,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void testFunction(View v) {
-        String userId = mSharedPreferences.getString(
-                getString(R.string.shared_pref_user_id), getString(R.string.default_user_id));
-
-        System.out.println(userId);
+//        String userId = mSharedPreferences.getString(
+//                getString(R.string.shared_pref_user_id), getString(R.string.default_user_id));
+//
+//        System.out.println(userId);
+        FingerprintAuthenticationDialogFragment fragment = new FingerprintAuthenticationDialogFragment();
+        fragment.show(getFragmentManager(), DIALOG_FRAGMENT_TAG);
     }
 
     public void startHomeActivity(View v) {

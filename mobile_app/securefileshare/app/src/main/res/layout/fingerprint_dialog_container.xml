@@ -23,7 +23,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
 
-        <include layout="@layout/fingerprint_dialog_content" />
+        <include layout="@layout/sms_dialog_content" />
+        <include layout="@layout/fingerprint_dialog_content"
+            android:visibility="gone" />
 
     </FrameLayout>
 
@@ -51,6 +53,12 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/cancel_button" />
+        <Button
+            android:id="@+id/next_button"
+            style="?android:attr/buttonBarPositiveButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/next_button" />
     </LinearLayout>
 
 </LinearLayout>
