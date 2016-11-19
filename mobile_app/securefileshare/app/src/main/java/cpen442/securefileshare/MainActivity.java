@@ -7,7 +7,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.hardware.fingerprint.FingerprintManager;
 import android.preference.PreferenceManager;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.PermissionChecker;
@@ -30,11 +32,18 @@ public class MainActivity extends AppCompatActivity {
     // Permission request codes
     private static final int PERMISSION_READ_PHONE_STATE = 100;
 
+    // Job code
+    private static final int JOB_CREATE_ACCOUNT = 0;
+    private static final int JOB_INVALID_CODE = 9999;
+
     // API request URLs
     private static final String CREATE_ACCOUNT_URL =
             "https://zb9evmcr90.execute-api.us-west-2.amazonaws.com/Prod/create-account";
+    private static final String AUTHENTICATE_URL =
+            "test";
 
     private SharedPreferences mSharedPreferences;
+    private String fpSecret;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,9 +100,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // HTTP Requests
     /**
      * POST request to server to create account
-     *
      * @param mContext
      * @param requestParams Name, IMEI, PhoneNumber, FirebaseTokenID
      */
@@ -103,9 +112,9 @@ public class MainActivity extends AppCompatActivity {
             public void processResponse(String response) {
                 try {
                     JSONObject resp = new JSONObject(response);
-                    boolean success = resp.getBoolean("success");
-                    if(success) {
+                    if(resp.getBoolean("success")) {
                         // Go to authenticator
+                        authenticate();
                     } else {
                         // Toast response message
                         String respMsg = resp.getString("responseMessage");
@@ -122,16 +131,69 @@ public class MainActivity extends AppCompatActivity {
         request.execute();
     }
 
+    /**
+     * Start fingerprint authentication
+     */
+    public void authenticate() {
+        FingerprintAuthenticationDialogFragment fragment = new FingerprintAuthenticationDialogFragment();
+        fragment.show(getFragmentManager(), DIALOG_FRAGMENT_TAG);
+    }
+
+    /**
+     * Fingerprint authentication complete, now build request to server
+     * @param withFingerprint
+     * @param cryptoObject
+     */
+    public void onAuthenticated(boolean withFingerprint,
+                                @Nullable FingerprintManager.CryptoObject cryptoObject) {
+        if(withFingerprint) {
+            assert cryptoObject != null;
+            //...
+            JSONObject reqParams = new JSONObject();
+            authenticateRequest(this, reqParams);
+        }
+    }
+
+    /**
+     * Send authentication request to server and handle response
+     * @param mContext
+     * @param requestParams
+     */
+    public void authenticateRequest(final Context mContext, JSONObject requestParams) {
+        HttpRequestUtility request = new HttpRequestUtility(new HttpRequestUtility.HttpResponseUtility() {
+            @Override
+            public void processResponse(String response) {
+                try {
+                    JSONObject resp = new JSONObject(response);
+                    boolean success = resp.getBoolean("success");
+                    if(success) {
+                        // Verify job-code (that this is createAccount)
+                        // Then store encrypted string and userid into shared preferences
+                        if(resp.getInt("jobId") == JOB_CREATE_ACCOUNT) {
+                            SharedPreferences.Editor editor = mSharedPreferences.edit();
+                            editor.putString(getString(R.string.shared_pref_user_id), resp.getString("userId"));
+                            editor.putString(getString(R.string.shared_pref_fp_secret), fpSecret);
+                            editor.commit();
+                        }
+                    } else {
+                        // Toast response message
+                        String respMsg = resp.getString("responseMessage");
+                        Toast.makeText(mContext, respMsg, Toast.LENGTH_SHORT).show();
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        request.setRequestType(HttpRequestUtility.POST_METHOD);
+        request.setRequestURL(AUTHENTICATE_URL);
+        request.setJSONString(requestParams.toString());
+        request.execute();
+    }
+
     // Button click listeners
     public void onCreateBtnClick(View v) {
-//        createAccount();
-//        FingerprintAuthenticationDialogFragment fragment = new FingerprintAuthenticationDialogFragment();
-//        fragment.show(getFragmentManager(), DIALOG_FRAGMENT_TAG);
-
-        SharedPreferences.Editor editor = mSharedPreferences.edit();
-        editor.putString(getString(R.string.shared_pref_user_id), "123456789");
-        editor.remove(getString(R.string.shared_pref_user_id));
-        editor.commit();
+        createAccount();
     }
 
     public void testFunction(View v) {

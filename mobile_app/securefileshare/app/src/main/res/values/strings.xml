@@ -12,4 +12,5 @@
     <!-- Shared preference file -->
     <string name="shared_pref_user_id">shared_pref.user_id</string>
     <string name="default_user_id">Invalid User ID</string>
+    <string name="shared_pref_fp_secret">shared_pref.fp_secret</string>
 </resources>

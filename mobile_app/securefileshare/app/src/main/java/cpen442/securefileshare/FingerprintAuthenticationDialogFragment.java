@@ -65,7 +65,9 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
 
     @Override
     public void onAuthenticated() {
-
+        if (mContext instanceof MainActivity) {
+            ((MainActivity) mContext).onAuthenticated(true, mCryptoObject);
+        }
     }
 
     @Override
