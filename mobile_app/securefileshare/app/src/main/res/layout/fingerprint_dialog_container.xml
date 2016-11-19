@@ -49,13 +49,8 @@
             android:id="@+id/cancel_button"
             style="?android:attr/buttonBarNegativeButtonStyle"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-
-        <Button
-            android:id="@+id/second_dialog_button"
-            style="?android:attr/buttonBarPositiveButtonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:text="@string/cancel_button" />
     </LinearLayout>
 
 </LinearLayout>

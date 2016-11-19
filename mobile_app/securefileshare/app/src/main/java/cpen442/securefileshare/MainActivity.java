@@ -27,9 +27,6 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String DIALOG_FRAGMENT_TAG = "myFragment";
 
-    // Static strings
-    private static final String SHARED_PREF_KEY = "cpen442.securefileshare.sharedprefkey";
-
     // Permission request codes
     private static final int PERMISSION_READ_PHONE_STATE = 100;
 
@@ -45,7 +42,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         registerReceiver(new FBReceiver(), new IntentFilter("FBMessage"));
-        mSharedPreferences = getSharedPreferences(SHARED_PREF_KEY, Context.MODE_PRIVATE);
+        mSharedPreferences = getSharedPreferences(
+                getString(R.string.preference_file_key), Context.MODE_PRIVATE);
     }
 
     @Override
@@ -128,8 +126,20 @@ public class MainActivity extends AppCompatActivity {
     // Button click listeners
     public void onCreateBtnClick(View v) {
 //        createAccount();
-        FingerprintAuthenticationDialogFragment fragment = new FingerprintAuthenticationDialogFragment();
-        fragment.show(getFragmentManager(), DIALOG_FRAGMENT_TAG);
+//        FingerprintAuthenticationDialogFragment fragment = new FingerprintAuthenticationDialogFragment();
+//        fragment.show(getFragmentManager(), DIALOG_FRAGMENT_TAG);
+
+        SharedPreferences.Editor editor = mSharedPreferences.edit();
+        editor.putString(getString(R.string.shared_pref_user_id), "123456789");
+        editor.remove(getString(R.string.shared_pref_user_id));
+        editor.commit();
+    }
+
+    public void testFunction(View v) {
+        String userId = mSharedPreferences.getString(
+                getString(R.string.shared_pref_user_id), getString(R.string.default_user_id));
+
+        System.out.println(userId);
     }
 
     public void startHomeActivity(View v) {

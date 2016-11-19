@@ -2,11 +2,11 @@ package cpen442.securefileshare;
 
 import android.app.DialogFragment;
 import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 
 
 public class FingerprintAuthenticationDialogFragment extends DialogFragment {
@@ -24,7 +24,16 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fingerprint_dialog_container, container, false);
+        getDialog().setTitle(getString(R.string.authenticate));
+        View v = inflater.inflate(R.layout.fingerprint_dialog_container, container, false);
+        Button cancelBtn = (Button) v.findViewById(R.id.cancel_button);
+        cancelBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dismiss();
+            }
+        });
+        return v;
     }
 
     @Override
