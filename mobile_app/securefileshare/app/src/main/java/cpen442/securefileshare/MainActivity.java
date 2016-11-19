@@ -159,12 +159,13 @@ public class MainActivity extends AppCompatActivity {
      */
     public void onAuthenticated(String smsSecret, boolean withFingerprint,
                                 @Nullable FingerprintManager.CryptoObject cryptoObject) {
-        if(withFingerprint) {
-            assert cryptoObject != null;
-            //...
-            JSONObject reqParams = new JSONObject();
-            authenticateRequest(this, reqParams);
-        }
+//        if(withFingerprint) {
+//            assert cryptoObject != null;
+//            //...
+//            JSONObject reqParams = new JSONObject();
+//            authenticateRequest(this, reqParams);
+//        }
+        System.out.println("WOO WE AUTHENTICATED");
     }
 
     /**
@@ -210,10 +211,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void testFunction(View v) {
-//        String userId = mSharedPreferences.getString(
-//                getString(R.string.shared_pref_user_id), getString(R.string.default_user_id));
-//
-//        System.out.println(userId);
         FingerprintAuthenticationDialogFragment fragment = new FingerprintAuthenticationDialogFragment();
         fragment.show(getFragmentManager(), DIALOG_FRAGMENT_TAG);
     }

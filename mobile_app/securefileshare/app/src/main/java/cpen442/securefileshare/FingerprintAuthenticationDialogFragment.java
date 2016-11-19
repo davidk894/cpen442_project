@@ -22,13 +22,14 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
     private FingerprintUiHelper mFingerprintUiHelper;
     private FingerprintManager.CryptoObject mCryptoObject;
     private String smsSecret;
+    private boolean waitForFingerprint;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         smsSecret = null;
-
+        waitForFingerprint = false;
         // Do not create a new Fragment when the Activity is re-created such as orientation changes.
         setRetainInstance(true);
         setStyle(DialogFragment.STYLE_NORMAL, android.R.style.Theme_Material_Light_Dialog);
@@ -59,6 +60,8 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
                     mView.findViewById(R.id.sms_content).setVisibility(View.GONE);
                     mView.findViewById(R.id.fingerprint_content).setVisibility(View.VISIBLE);
                     v.setVisibility(View.GONE);
+                    waitForFingerprint = true;
+                    mFingerprintUiHelper.startListening(mCryptoObject);
                 } else {
                     Toast.makeText(mContext, getString(R.string.invalid_sms), Toast.LENGTH_SHORT).show();
                 }
@@ -75,7 +78,9 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
     @Override
     public void onResume() {
         super.onResume();
-        mFingerprintUiHelper.startListening(mCryptoObject);
+        if(waitForFingerprint) {
+            mFingerprintUiHelper.startListening(mCryptoObject);
+        }
     }
 
     @Override
