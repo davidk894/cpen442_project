@@ -16,6 +16,7 @@ import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.util.Random;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -27,7 +28,9 @@ import javax.crypto.NoSuchPaddingException;
 public class KeyStoreInterface {
     private static final String AKeyStore_String = "AndroidKeyStore";
     private static final String KEY_NAME = "FingerPrintKey12345";
-    private static final String cipherMode = "AES/CBC/PKCS5Padding";
+    private static final String cipherMode = "AES/CBC/PKCS7Padding";
+    private static final char[] VALID_CHARACTERS =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456879".toCharArray();
     private static final int MESSAGE_SIZE = 16;
     private static final boolean invalidatedByBiometricEnrollment = true;
 
@@ -57,7 +60,7 @@ public class KeyStoreInterface {
         }
         KeyGenParameterSpec.Builder builder = new KeyGenParameterSpec.Builder(KEY_NAME,
                 KeyProperties.PURPOSE_DECRYPT | KeyProperties.PURPOSE_ENCRYPT)
-                //.setBlockModes(KeyProperties.BLOCK_MODE_CBC)
+                .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
                 .setUserAuthenticationRequired(true) 
                 .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -97,6 +100,16 @@ public class KeyStoreInterface {
         return false;
     }
 
+    public static void removeKey() {
+        try {
+            KeyStore keyStore = KeyStore.getInstance(AKeyStore_String);
+            keyStore.load(null);
+            keyStore.deleteEntry(KEY_NAME);
+        } catch (IOException | CertificateException | NoSuchAlgorithmException | KeyStoreException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static byte[] transform(Cipher cipher, byte[] toTransform) {
         if (toTransform.length == MESSAGE_SIZE) {
             try {
@@ -117,13 +130,21 @@ public class KeyStoreInterface {
         return base64.getBytes(StandardCharsets.UTF_8);
     }
 
-    public static byte[] generateCryptoMessage() {
+    public static String generateCryptoMessage() {
         return generateSecureRandom(MESSAGE_SIZE);
     }
 
-    private static byte[] generateSecureRandom(int numberOfBytes) {
-        byte[] buff = new byte[numberOfBytes];
-        SecureRandom random = new SecureRandom();
-        return buff;
+    private static String generateSecureRandom(int numberOfBytes) {
+        char[] buff = new char[numberOfBytes];
+        SecureRandom secureRandom = new SecureRandom();
+        Random rand = new Random();
+        for (int i = 0; i < numberOfBytes; ++i) {
+            // reseed rand once you've used up all available entropy bits
+            if ((i % 10) == 0) {
+                rand.setSeed(secureRandom.nextLong()); // 64 bits of random!
+            }
+            buff[i] = VALID_CHARACTERS[rand.nextInt(VALID_CHARACTERS.length)];
+        }
+        return new String(buff);
     }
 }

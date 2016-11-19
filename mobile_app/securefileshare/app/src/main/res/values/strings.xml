@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">Secure File Share</string>
     <string name="no_existing_account">Please create an account first</string>
+
     <!-- Authentication dialog -->
     <string name="cancel_button">Cancel</string>
     <string name="next_button">Next</string>
@@ -20,4 +21,9 @@
     <string name="shared_pref_user_id">shared_pref.user_id</string>
     <string name="default_user_id">Invalid User ID</string>
     <string name="shared_pref_fp_secret">shared_pref.fp_secret</string>
+
+    <!-- POST request URLs -->
+    <string name="create_account_url">https://zb9evmcr90.execute-api.us-west-2.amazonaws.com/Prod/create-account</string>
+    <string name="add_key_url">https://zb9evmcr90.execute-api.us-west-2.amazonaws.com/Prod/add-key</string>
+    <string name="authenticate_url">https://zb9evmcr90.execute-api.us-west-2.amazonaws.com/Prod/do-job</string>
 </resources>

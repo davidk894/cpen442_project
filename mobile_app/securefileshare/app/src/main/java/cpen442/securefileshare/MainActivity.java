@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.fingerprint.FingerprintManager;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
@@ -35,25 +36,30 @@ public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_READ_PHONE_STATE = 100;
 
     // Job code
-    private static final int JOB_CREATE_ACCOUNT = 0;
+    private static final int JOB_CREATE_ACCOUNT = 1;
     private static final int JOB_INVALID_CODE = 9999;
 
-    // API request URLs
-    private static final String CREATE_ACCOUNT_URL =
-            "https://zb9evmcr90.execute-api.us-west-2.amazonaws.com/Prod/create-account";
-    private static final String AUTHENTICATE_URL =
-            "test";
-
     private SharedPreferences mSharedPreferences;
+    private BroadcastReceiver fbReceiver;
     private String fpSecret;
+    private String jobId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        registerReceiver(new FBReceiver(), new IntentFilter("FBMessage"));
+        fbReceiver = new FBReceiver();
+        registerReceiver(fbReceiver, new IntentFilter("FBMessage"));
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if(fbReceiver != null) {
+            unregisterReceiver(fbReceiver);
+        }
     }
 
     @Override
@@ -87,13 +93,14 @@ public class MainActivity extends AppCompatActivity {
             // Already have permissions
             JSONObject reqParams = new JSONObject();
             TelephonyManager mgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-            String deviceId = mgr.getDeviceId();
-            String phoneNumber = mgr.getLine1Number();
+            fpSecret = KeyStoreInterface.generateCryptoMessage();
+//            String phoneNumber = "+" + mgr.getLine1Number();
+            String phoneNumber = "+16047809817";
             String fcmToken = FirebaseInstanceId.getInstance().getToken();
             try {
                 reqParams.put("firebaseID", fcmToken);
                 reqParams.put("name", "TestUser");
-                reqParams.put("IMEI", deviceId);
+                reqParams.put("fpSecret", fpSecret);
                 reqParams.put("contactNumber", phoneNumber);
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -118,6 +125,7 @@ public class MainActivity extends AppCompatActivity {
                         // Go to authenticator
                         // We won't be making duplicate accounts
                         // If there is a duplicate account, we should've gotten the "fail" response
+                        jobId = resp.getString("jobID");
                         authCreateAccount();
                     } else {
                         // Toast response message
@@ -130,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         request.setRequestType(HttpRequestUtility.POST_METHOD);
-        request.setRequestURL(CREATE_ACCOUNT_URL);
+        request.setRequestURL(getString(R.string.create_account_url));
         request.setJSONString(requestParams.toString());
         request.execute();
     }
@@ -153,19 +161,33 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Fingerprint authentication complete, now build request to server
+     * Normally on authenticate, the encrypted fpSecret would be retrieved
+     * from shared preferences and then decrypted with the cryptoObject
+     * But since we are only going to be authenticating for create account here
+     * the fpSecret should be in memory so we can just use it directly
      * @param smsSecret
      * @param withFingerprint
      * @param cryptoObject
      */
     public void onAuthenticated(String smsSecret, boolean withFingerprint,
                                 @Nullable FingerprintManager.CryptoObject cryptoObject) {
-//        if(withFingerprint) {
-//            assert cryptoObject != null;
-//            //...
-//            JSONObject reqParams = new JSONObject();
-//            authenticateRequest(this, reqParams);
-//        }
-        System.out.println("WOO WE AUTHENTICATED");
+        assert(fpSecret != null);
+        assert(jobId != null);
+        assert(cryptoObject != null);
+
+        if(withFingerprint) {
+            JSONObject reqParams = new JSONObject();
+            try {
+                reqParams.put("fpSecret", fpSecret);
+                reqParams.put("jobID", jobId);
+                reqParams.put("smsSecret", smsSecret);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            fpSecret = KeyStoreInterface.toBase64String(KeyStoreInterface.transform(
+                    cryptoObject.getCipher(), KeyStoreInterface.toBytes(fpSecret)));
+            authenticateRequest(this, reqParams);
+        }
     }
 
     /**
@@ -181,11 +203,10 @@ public class MainActivity extends AppCompatActivity {
                     JSONObject resp = new JSONObject(response);
                     boolean success = resp.getBoolean("success");
                     if(success) {
-                        // Verify job-code (that this is createAccount)
-                        // Then store encrypted string and userid into shared preferences
-                        if(resp.getInt("jobId") == JOB_CREATE_ACCOUNT) {
+                        if(resp.getInt("jobType") == JOB_CREATE_ACCOUNT) {
+                            String userId = resp.getString("information");
                             SharedPreferences.Editor editor = mSharedPreferences.edit();
-                            editor.putString(getString(R.string.shared_pref_user_id), resp.getString("userId"));
+                            editor.putString(getString(R.string.shared_pref_user_id), userId);
                             editor.putString(getString(R.string.shared_pref_fp_secret), fpSecret);
                             editor.commit();
                         }
@@ -200,7 +221,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         request.setRequestType(HttpRequestUtility.POST_METHOD);
-        request.setRequestURL(AUTHENTICATE_URL);
+        request.setRequestURL(getString(R.string.authenticate_url));
         request.setJSONString(requestParams.toString());
         request.execute();
     }
@@ -211,8 +232,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void testFunction(View v) {
-        FingerprintAuthenticationDialogFragment fragment = new FingerprintAuthenticationDialogFragment();
-        fragment.show(getFragmentManager(), DIALOG_FRAGMENT_TAG);
+//        FingerprintAuthenticationDialogFragment fragment = new FingerprintAuthenticationDialogFragment();
+//        fragment.show(getFragmentManager(), DIALOG_FRAGMENT_TAG);
+//        if(KeyStoreInterface.keyExists()) {
+//            KeyStoreInterface.removeKey();
+        String userId = mSharedPreferences.getString(
+                getString(R.string.shared_pref_user_id), getString(R.string.default_user_id));
+        String fpSecret = mSharedPreferences.getString(getString(R.string.shared_pref_fp_secret), "INVALID");
+        Toast.makeText(this, userId + " " + fpSecret, Toast.LENGTH_LONG).show();
     }
 
     public void startHomeActivity(View v) {
