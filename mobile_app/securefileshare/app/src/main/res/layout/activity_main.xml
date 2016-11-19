@@ -10,16 +10,27 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="cpen442.securefileshare.MainActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!" />
-
     <Button
         android:text="Create Account"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:id="@+id/btn_createacc"
         android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true"
-        android:id="@+id/btn_createacc" />
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:onClick="onCreateBtnClick" />
+
+    <Button
+        android:text="Enter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/btn_enter"
+        android:layout_above="@+id/btn_createacc"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:onClick="startHomeActivity" />
 </RelativeLayout>
