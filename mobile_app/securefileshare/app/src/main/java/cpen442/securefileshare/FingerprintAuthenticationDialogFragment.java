@@ -105,8 +105,8 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
 
     @Override
     public void onAuthenticated() {
+        dismiss();
         if (mContext instanceof MainActivity) {
-            dismiss();
             ((MainActivity) mContext).onAuthenticated(smsSecret, true, mCryptoObject);
         }
     }

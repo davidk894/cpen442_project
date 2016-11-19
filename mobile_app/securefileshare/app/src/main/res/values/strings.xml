@@ -21,6 +21,7 @@
     <string name="shared_pref_user_id">shared_pref.user_id</string>
     <string name="default_user_id">Invalid User ID</string>
     <string name="shared_pref_fp_secret">shared_pref.fp_secret</string>
+    <string name="invalid_fp_secret">Invalid FP Secret</string>
 
     <!-- POST request URLs -->
     <string name="create_account_url">https://zb9evmcr90.execute-api.us-west-2.amazonaws.com/Prod/create-account</string>

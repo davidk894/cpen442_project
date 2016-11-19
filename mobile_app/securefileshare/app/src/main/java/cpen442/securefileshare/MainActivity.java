@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.fingerprint.FingerprintManager;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
@@ -30,15 +29,6 @@ import javax.crypto.Cipher;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String DIALOG_FRAGMENT_TAG = "myFragment";
-
-    // Permission request codes
-    private static final int PERMISSION_READ_PHONE_STATE = 100;
-
-    // Job code
-    private static final int JOB_CREATE_ACCOUNT = 1;
-    private static final int JOB_INVALID_CODE = 9999;
-
     private SharedPreferences mSharedPreferences;
     private BroadcastReceiver fbReceiver;
     private String fpSecret;
@@ -50,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         fbReceiver = new FBReceiver();
-        registerReceiver(fbReceiver, new IntentFilter("FBMessage"));
+        registerReceiver(fbReceiver, new IntentFilter(Constants.FB_RECEIVER_INTENT_FILTER));
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
     }
 
@@ -63,10 +53,26 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        if(fbReceiver != null) {
+            unregisterReceiver(fbReceiver);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(fbReceiver != null) {
+            registerReceiver(fbReceiver, new IntentFilter("FBMessage"));
+        }
+    }
+
+    @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
         switch (requestCode) {
-            case PERMISSION_READ_PHONE_STATE: {
+            case Constants.PERMISSION_READ_PHONE_STATE: {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -88,14 +94,13 @@ public class MainActivity extends AppCompatActivity {
             // Request permissions
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.READ_PHONE_STATE},
-                    PERMISSION_READ_PHONE_STATE);
+                    Constants.PERMISSION_READ_PHONE_STATE);
         } else {
             // Already have permissions
             JSONObject reqParams = new JSONObject();
             TelephonyManager mgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
             fpSecret = KeyStoreInterface.generateCryptoMessage();
-//            String phoneNumber = "+" + mgr.getLine1Number();
-            String phoneNumber = "+16047809817";
+            String phoneNumber = "+" + mgr.getLine1Number();
             String fcmToken = FirebaseInstanceId.getInstance().getToken();
             try {
                 reqParams.put("firebaseID", fcmToken);
@@ -109,7 +114,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // HTTP Requests
+    // Create account request
     /**
      * POST request to server to create account
      * @param mContext
@@ -156,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
         FingerprintAuthenticationDialogFragment fragment = new FingerprintAuthenticationDialogFragment();
         fragment.setCryptoObject(cryptoObject);
 
-        fragment.show(getFragmentManager(), DIALOG_FRAGMENT_TAG);
+        fragment.show(getFragmentManager(), Constants.DIALOG_FRAGMENT_TAG);
     }
 
     /**
@@ -203,7 +208,7 @@ public class MainActivity extends AppCompatActivity {
                     JSONObject resp = new JSONObject(response);
                     boolean success = resp.getBoolean("success");
                     if(success) {
-                        if(resp.getInt("jobType") == JOB_CREATE_ACCOUNT) {
+                        if(resp.getInt("jobType") == Constants.JOB_CREATE_ACCOUNT) {
                             String userId = resp.getString("information");
                             SharedPreferences.Editor editor = mSharedPreferences.edit();
                             editor.putString(getString(R.string.shared_pref_user_id), userId);
@@ -231,17 +236,6 @@ public class MainActivity extends AppCompatActivity {
         createAccount();
     }
 
-    public void testFunction(View v) {
-//        FingerprintAuthenticationDialogFragment fragment = new FingerprintAuthenticationDialogFragment();
-//        fragment.show(getFragmentManager(), DIALOG_FRAGMENT_TAG);
-//        if(KeyStoreInterface.keyExists()) {
-//            KeyStoreInterface.removeKey();
-        String userId = mSharedPreferences.getString(
-                getString(R.string.shared_pref_user_id), getString(R.string.default_user_id));
-        String fpSecret = mSharedPreferences.getString(getString(R.string.shared_pref_fp_secret), "INVALID");
-        Toast.makeText(this, userId + " " + fpSecret, Toast.LENGTH_LONG).show();
-    }
-
     public void startHomeActivity(View v) {
         String userId = mSharedPreferences.getString(getString(R.string.shared_pref_user_id),
                 getString(R.string.default_user_id));
@@ -253,10 +247,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public class FBReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Toast.makeText(context, intent.getStringExtra("message"), Toast.LENGTH_SHORT).show();
-        }
+    public void testFunction(View v) {
+//        FingerprintAuthenticationDialogFragment fragment = new FingerprintAuthenticationDialogFragment();
+//        fragment.show(getFragmentManager(), DIALOG_FRAGMENT_TAG);
+//        if(KeyStoreInterface.keyExists()) {
+//            KeyStoreInterface.removeKey();
+        String userId = mSharedPreferences.getString(
+                getString(R.string.shared_pref_user_id), getString(R.string.default_user_id));
+        String fpSecret = mSharedPreferences.getString(getString(R.string.shared_pref_fp_secret), "INVALID");
+        Toast.makeText(this, userId + " " + fpSecret, Toast.LENGTH_LONG).show();
     }
 }
