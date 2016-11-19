@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Secure File Share</string>
-
+    <string name="no_existing_account">Please create an account first</string>
     <!-- Authentication dialog -->
     <string name="cancel_button">Cancel</string>
     <string name="next_button">Next</string>

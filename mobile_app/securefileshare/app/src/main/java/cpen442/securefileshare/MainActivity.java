@@ -216,8 +216,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void startHomeActivity(View v) {
-        Intent enterIntent = new Intent(v.getContext(), HomeActivity.class);
-        startActivity(enterIntent);
+        String userId = mSharedPreferences.getString(getString(R.string.shared_pref_user_id),
+                getString(R.string.default_user_id));
+        if(!userId.equals(getString(R.string.default_user_id))) {
+            Intent enterIntent = new Intent(this, HomeActivity.class);
+            startActivity(enterIntent);
+        } else {
+            Toast.makeText(this, getString(R.string.no_existing_account), Toast.LENGTH_SHORT).show();
+        }
     }
 
     public class FBReceiver extends BroadcastReceiver {
