@@ -31,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
 
     private SharedPreferences mSharedPreferences;
     private BroadcastReceiver fbReceiver;
+    private FingerprintAuthenticationDialogFragment fragment;
     private String fpSecret;
     private String jobId;
 
@@ -68,6 +69,24 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // Button click listeners
+    public void onCreateBtnClick(View v) {
+        createAccount();
+    }
+
+    public void startHomeActivity(View v) {
+        String userId = mSharedPreferences.getString(Constants.SHARED_PREF_USER_ID,
+                Constants.INVALID_USER_ID);
+
+        if(!userId.equals(Constants.INVALID_USER_ID)) {
+            Intent enterIntent = new Intent(this, HomeActivity.class);
+            startActivity(enterIntent);
+        } else {
+            Toast.makeText(this, getString(R.string.no_existing_account), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    // Permissions
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
@@ -76,9 +95,21 @@ public class MainActivity extends AppCompatActivity {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
                     // Permission granted
                     this.createAccount();
+                } else {
+                    // Don't do anything then..
+                }
+                break;
+            }
+            case Constants.PERMISSION_READ_SMS: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // Permission granted
+                    if(fragment != null) {
+                        fragment.readSMSSecret();
+                    }
                 } else {
                     // Don't do anything then..
                 }
@@ -88,6 +119,7 @@ public class MainActivity extends AppCompatActivity {
         return;
     }
 
+    // Create account
     public void createAccount() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE)
                 != PermissionChecker.PERMISSION_GRANTED) {
@@ -114,7 +146,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Create account request
     /**
      * POST request to server to create account
      * @param mContext
@@ -127,9 +158,6 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     JSONObject resp = new JSONObject(response);
                     if(resp.getBoolean("success")) {
-                        // Go to authenticator
-                        // We won't be making duplicate accounts
-                        // If there is a duplicate account, we should've gotten the "fail" response
                         jobId = resp.getString("jobID");
                         authCreateAccount();
                     } else {
@@ -143,14 +171,12 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         request.setRequestType(HttpRequestUtility.POST_METHOD);
-        request.setRequestURL(getString(R.string.create_account_url));
+        request.setRequestURL(Constants.CREATE_ACCOUNT_URL);
         request.setJSONString(requestParams.toString());
         request.execute();
     }
 
-    /**
-     * Start fingerprint authentication
-     */
+    // Authentication
     public void authCreateAccount() {
         if(!KeyStoreInterface.keyExists()) {
             KeyStoreInterface.generateKey();
@@ -158,7 +184,7 @@ public class MainActivity extends AppCompatActivity {
         Cipher cipher = KeyStoreInterface.cipherInit(Cipher.ENCRYPT_MODE);
         FingerprintManager.CryptoObject cryptoObject = new FingerprintManager.CryptoObject(cipher);
 
-        FingerprintAuthenticationDialogFragment fragment = new FingerprintAuthenticationDialogFragment();
+        fragment = new FingerprintAuthenticationDialogFragment();
         fragment.setCryptoObject(cryptoObject);
 
         fragment.show(getFragmentManager(), Constants.DIALOG_FRAGMENT_TAG);
@@ -180,11 +206,13 @@ public class MainActivity extends AppCompatActivity {
         assert(jobId != null);
         assert(cryptoObject != null);
 
+        fragment = null;
+
         if(withFingerprint) {
             JSONObject reqParams = new JSONObject();
             try {
-                reqParams.put("fpSecret", fpSecret);
                 reqParams.put("jobID", jobId);
+                reqParams.put("fpSecret", fpSecret);
                 reqParams.put("smsSecret", smsSecret);
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -211,8 +239,8 @@ public class MainActivity extends AppCompatActivity {
                         if(resp.getInt("jobType") == Constants.JOB_CREATE_ACCOUNT) {
                             String userId = resp.getString("information");
                             SharedPreferences.Editor editor = mSharedPreferences.edit();
-                            editor.putString(getString(R.string.shared_pref_user_id), userId);
-                            editor.putString(getString(R.string.shared_pref_fp_secret), fpSecret);
+                            editor.putString(Constants.SHARED_PREF_USER_ID, userId);
+                            editor.putString(Constants.SHARED_PREF_FP_SECRET, fpSecret);
                             editor.commit();
                         }
                     } else {
@@ -226,35 +254,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         request.setRequestType(HttpRequestUtility.POST_METHOD);
-        request.setRequestURL(getString(R.string.authenticate_url));
+        request.setRequestURL(Constants.AUTHENTICATE_URL);
         request.setJSONString(requestParams.toString());
         request.execute();
-    }
-
-    // Button click listeners
-    public void onCreateBtnClick(View v) {
-        createAccount();
-    }
-
-    public void startHomeActivity(View v) {
-        String userId = mSharedPreferences.getString(getString(R.string.shared_pref_user_id),
-                getString(R.string.default_user_id));
-        if(!userId.equals(getString(R.string.default_user_id))) {
-            Intent enterIntent = new Intent(this, HomeActivity.class);
-            startActivity(enterIntent);
-        } else {
-            Toast.makeText(this, getString(R.string.no_existing_account), Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    public void testFunction(View v) {
-//        FingerprintAuthenticationDialogFragment fragment = new FingerprintAuthenticationDialogFragment();
-//        fragment.show(getFragmentManager(), DIALOG_FRAGMENT_TAG);
-//        if(KeyStoreInterface.keyExists()) {
-//            KeyStoreInterface.removeKey();
-        String userId = mSharedPreferences.getString(
-                getString(R.string.shared_pref_user_id), getString(R.string.default_user_id));
-        String fpSecret = mSharedPreferences.getString(getString(R.string.shared_pref_fp_secret), "INVALID");
-        Toast.makeText(this, userId + " " + fpSecret, Toast.LENGTH_LONG).show();
     }
 }

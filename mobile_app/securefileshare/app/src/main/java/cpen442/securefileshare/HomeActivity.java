@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.hardware.fingerprint.FingerprintManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -19,6 +20,7 @@ public class HomeActivity extends AppCompatActivity {
 
     private SharedPreferences mSharedPreferences;
     private BroadcastReceiver fbReceiver;
+    private FingerprintAuthenticationDialogFragment fragment;
     private String jobId;
 
     @Override
@@ -54,33 +56,75 @@ public class HomeActivity extends AppCompatActivity {
             registerReceiver(fbReceiver, new IntentFilter("FBMessage"));
         }
     }
-    // Authentication
 
+    // Button click listeners
+    public void encryptBtnClick(View v) {
+        // do nothing
+    }
+
+    public void decryptBtnClick(View v) {
+        // do nothing
+    }
+
+    public void reqListBtnClick(View v) {
+        // do nothing
+    }
+
+    // Permissions
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case Constants.PERMISSION_READ_PHONE_STATE: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // Permission granted
+                } else {
+                    // Don't do anything then..
+                }
+                break;
+            }
+            case Constants.PERMISSION_READ_SMS: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // Permission granted
+                    if(fragment != null) {
+                        fragment.readSMSSecret();
+                    }
+                } else {
+                    // Don't do anything then..
+                }
+                break;
+            }
+        }
+        return;
+    }
+
+    // Authentication
     /**
      * Fingerprint authentication complete, now build request to server
-     * Normally on authenticate, the encrypted fpSecret would be retrieved
-     * from shared preferences and then decrypted with the cryptoObject
-     * But since we are only going to be authenticating for create account here
-     * the fpSecret should be in memory so we can just use it directly
      * @param smsSecret
      * @param withFingerprint
      * @param cryptoObject
      */
     public void onAuthenticated(String smsSecret, boolean withFingerprint,
                                 @Nullable FingerprintManager.CryptoObject cryptoObject) {
+        assert(jobId != null);
         assert(cryptoObject != null);
+        fragment = null;
 
-        String invalidFPSecret = getString(R.string.invalid_fp_secret);
         String encryptedFPSecret = mSharedPreferences.getString(
-                getString(R.string.shared_pref_fp_secret), invalidFPSecret);
-        if(!encryptedFPSecret.equals(invalidFPSecret)) {
+                Constants.SHARED_PREF_FP_SECRET, Constants.INVALID_FP_SECRET);
+        if(!encryptedFPSecret.equals(Constants.INVALID_FP_SECRET)) {
             String fpSecret = KeyStoreInterface.toBase64String(KeyStoreInterface.transform(
                     cryptoObject.getCipher(), KeyStoreInterface.toBytes(encryptedFPSecret)));
             if (withFingerprint) {
                 JSONObject reqParams = new JSONObject();
                 try {
-                    reqParams.put("fpSecret", fpSecret);
                     reqParams.put("jobID", jobId);
+                    reqParams.put("fpSecret", fpSecret);
                     reqParams.put("smsSecret", smsSecret);
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -114,7 +158,7 @@ public class HomeActivity extends AppCompatActivity {
             }
         });
         request.setRequestType(HttpRequestUtility.POST_METHOD);
-        request.setRequestURL(getString(R.string.authenticate_url));
+        request.setRequestURL(Constants.AUTHENTICATE_URL);
         request.setJSONString(requestParams.toString());
         request.execute();
     }
@@ -129,19 +173,5 @@ public class HomeActivity extends AppCompatActivity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-    }
-
-    // Button click listeners
-
-    public void encryptBtnClick(View v) {
-        // do nothing
-    }
-
-    public void decryptBtnClick(View v) {
-        // do nothing
-    }
-
-    public void reqListBtnClick(View v) {
-        // do nothing
     }
 }
