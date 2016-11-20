@@ -16,6 +16,8 @@ import android.widget.Toast;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import javax.crypto.Cipher;
+
 public class HomeActivity extends AppCompatActivity {
 
     private SharedPreferences mSharedPreferences;
@@ -102,7 +104,39 @@ public class HomeActivity extends AppCompatActivity {
         return;
     }
 
+    // Encrypt and add key
+    public void encrypt() {
+        //do encrypt
+        JSONObject requestParams = new JSONObject();
+        makeRequest(this, Constants.ADD_KEY_URL, requestParams);
+    }
+
+    // Decrypt request
+    public void decrypt() {
+        JSONObject requestParams = new JSONObject();
+        makeRequest(this, Constants.REQUEST_KEY_URL, requestParams);
+    }
+
+    // Get jobs
+    public void requestList() {
+        JSONObject requestParams = new JSONObject();
+        makeRequest(this, Constants.GET_JOB_LIST_URL, requestParams);
+    }
+
     // Authentication
+    public void startAuthenticate() {
+        if(!KeyStoreInterface.keyExists()) {
+            KeyStoreInterface.generateKey();
+        }
+        Cipher cipher = KeyStoreInterface.cipherInit(Cipher.DECRYPT_MODE);
+        FingerprintManager.CryptoObject cryptoObject = new FingerprintManager.CryptoObject(cipher);
+
+        fragment = new FingerprintAuthenticationDialogFragment();
+        fragment.setCryptoObject(cryptoObject);
+
+        fragment.show(getFragmentManager(), Constants.DIALOG_FRAGMENT_TAG);
+    }
+
     /**
      * Fingerprint authentication complete, now build request to server
      * @param smsSecret
@@ -167,11 +201,46 @@ public class HomeActivity extends AppCompatActivity {
         try {
             Integer jobType = resp.getInt("jobType");
             switch(jobType) {
+                case Constants.JOB_REQUEST_KEY: {
+                    break;
+                }
+                case Constants.JOB_ADD_KEY: {
+                    break;
+                }
+                case Constants.JOB_GET_JOBS: {
+                    break;
+                }
                 default:
                     //do nothing;
             }
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    // Build HTTP request + handle response
+    public void makeRequest(final Context mContext, String requestURL, JSONObject requestParams) {
+        HttpRequestUtility request = new HttpRequestUtility(new HttpRequestUtility.HttpResponseUtility() {
+            @Override
+            public void processResponse(String response) {
+                try {
+                    JSONObject resp = new JSONObject(response);
+                    if(resp.getBoolean("success")) {
+                        jobId = resp.getString("jobID");
+                        startAuthenticate();
+                    } else {
+                        // Toast response message
+                        String respMsg = resp.getString("responseMessage");
+                        Toast.makeText(mContext, respMsg, Toast.LENGTH_SHORT).show();
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        request.setRequestType(HttpRequestUtility.POST_METHOD);
+        request.setRequestURL(requestURL);
+        request.setJSONString(requestParams.toString());
+        request.execute();
     }
 }

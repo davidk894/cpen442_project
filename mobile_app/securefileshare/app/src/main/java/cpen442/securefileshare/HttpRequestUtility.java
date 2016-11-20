@@ -2,6 +2,10 @@ package cpen442.securefileshare;
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.widget.Toast;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -75,7 +79,7 @@ public class HttpRequestUtility extends AsyncTask<Void, Void, String> {
         }
     }
 
-    // #region setters and getters
+    // setters and getters
     private String getRequestURL() {
         return this.requestURL;
     }
@@ -96,9 +100,8 @@ public class HttpRequestUtility extends AsyncTask<Void, Void, String> {
     public void setJSONString(String params) {
         this.JSONString = params;
     }
-    // #endregion setters and getters
 
-    // #region request building
+    // request building
     private void setHeaderData(HttpURLConnection conn) throws IOException {
         conn.setRequestProperty("Content-Type", "application/json");
         conn.setRequestProperty("Accept", "application/json");
@@ -135,10 +138,9 @@ public class HttpRequestUtility extends AsyncTask<Void, Void, String> {
         reader.close();
         return response.toString();
     }
-    // #endregion request building
+    // request building
 
     public interface HttpResponseUtility {
         void processResponse(String response);
     }
-
 }
