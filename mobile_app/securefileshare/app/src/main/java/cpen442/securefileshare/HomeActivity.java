@@ -2,6 +2,7 @@ package cpen442.securefileshare;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -61,11 +62,11 @@ public class HomeActivity extends AppCompatActivity {
 
     // Button click listeners
     public void encryptBtnClick(View v) {
-        // do nothing
+        showFileChooser(Constants.FILE_CHOOSER_ENCRYPT);
     }
 
     public void decryptBtnClick(View v) {
-        // do nothing
+        showFileChooser(Constants.FILE_CHOOSER_DECRYPT);
     }
 
     public void reqListBtnClick(View v) {
@@ -123,6 +124,37 @@ public class HomeActivity extends AppCompatActivity {
         makeRequest(this, Constants.GET_JOB_LIST_URL, requestParams);
     }
 
+    // File browser for encrypt/decrypt
+    public void showFileChooser(int requestCode) {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.setType("*/*");      //all files
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+
+        try {
+            startActivityForResult(Intent.createChooser(intent, "Select a File to Upload"), requestCode);
+        } catch (android.content.ActivityNotFoundException ex) {
+            // Potentially direct the user to the Market with a Dialog
+            Toast.makeText(this, "Please install a File Manager.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == Constants.FILE_CHOOSER_ENCRYPT) {
+            // Make sure the request was successful
+            if (resultCode == RESULT_OK) {
+                // The user picked a file.
+                // The Intent's data is our file..?
+
+                // do something with the file
+            }
+        } else if (requestCode == Constants.FILE_CHOOSER_DECRYPT) {
+            if (resultCode == RESULT_OK) {
+                // woo
+            }
+        }
+    }
+
     // Authentication
     public void startAuthenticate() {
         if(!KeyStoreInterface.keyExists()) {
@@ -168,11 +200,6 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Send authentication request to server and handle response
-     * @param mContext
-     * @param requestParams
-     */
     public void authenticateRequest(final Context mContext, JSONObject requestParams) {
         HttpRequestUtility request = new HttpRequestUtility(new HttpRequestUtility.HttpResponseUtility() {
             @Override

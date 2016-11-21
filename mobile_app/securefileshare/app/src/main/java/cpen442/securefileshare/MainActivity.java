@@ -143,7 +143,8 @@ public class MainActivity extends AppCompatActivity {
             JSONObject reqParams = new JSONObject();
             TelephonyManager mgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
             fpSecret = KeyStoreInterface.generateCryptoMessage();
-            String phoneNumber = "+" + mgr.getLine1Number();
+//            String phoneNumber = "+" + mgr.getLine1Number();
+            String phoneNumber = "+16047809817";
             String fcmToken = FirebaseInstanceId.getInstance().getToken();
             try {
                 reqParams.put("firebaseID", fcmToken);
@@ -213,7 +214,6 @@ public class MainActivity extends AppCompatActivity {
      */
     public void onAuthenticated(String smsSecret, boolean withFingerprint,
                                 @Nullable FingerprintManager.CryptoObject cryptoObject) {
-        assert(fpSecret != null);
         assert(jobId != null);
         assert(cryptoObject != null);
 
@@ -253,6 +253,7 @@ public class MainActivity extends AppCompatActivity {
                             editor.putString(Constants.SHARED_PREF_USER_ID, userId);
                             editor.putString(Constants.SHARED_PREF_FP_SECRET, fpSecret);
                             editor.commit();
+                            fpSecret = null;
                         }
                     } else {
                         // Toast response message

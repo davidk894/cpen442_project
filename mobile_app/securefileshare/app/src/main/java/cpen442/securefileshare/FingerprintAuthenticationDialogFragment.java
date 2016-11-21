@@ -1,6 +1,5 @@
 package cpen442.securefileshare;
 
-import android.*;
 import android.app.DialogFragment;
 import android.content.Context;
 import android.hardware.fingerprint.FingerprintManager;
@@ -132,7 +131,6 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
                     Constants.PERMISSION_READ_SMS);
         } else {
             // Already have permissions now we need to read sms..
-
         }
     }
 }
