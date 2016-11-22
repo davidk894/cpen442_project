@@ -1,5 +1,6 @@
 package cpen442.securefileshare.encryption;
 
+import java.io.File;
 import java.io.IOException;
 
 import javax.crypto.SecretKey;
@@ -11,15 +12,14 @@ import javax.crypto.SecretKey;
 public class FileEncyrption {
 
     //returns the key
-    public static byte[] EncryptFile(String inputFileFolder, String inputFileName, String outputFileFolder, String outputFileName) throws IOException, EncryptionException {
-        String inputFilePath = FileIO.combine(inputFileFolder, inputFileName);
+    public static EncryptedPlusKey EncryptFile(String inputFilePath) throws IOException, EncryptionException {
         byte[] fileBytes = FileIO.ReadAllBytes(inputFilePath);
-        FileFormat FF = new FileFormat(fileBytes, inputFileName);
+        File f = new File(inputFilePath);
+        String fileName = f.getName();
+        FileFormat FF = new FileFormat(fileBytes, fileName);
         SecretKey key = Encryption.generateKey();
         byte[] encrypted = EncryptionWrapper.encrypt(FF.toBytes(), key);
-        String outputFilePath = FileIO.combine(outputFileFolder, outputFileName);
-        FileIO.WriteAllBytes(outputFilePath, encrypted);
-        return key.getEncoded();
+        return new EncryptedPlusKey(encrypted, key.getEncoded());
     }
 
     public static FileFormat DecryptFile(String filePath, byte[] key) throws IOException, EncryptionException, FileFormatException {
