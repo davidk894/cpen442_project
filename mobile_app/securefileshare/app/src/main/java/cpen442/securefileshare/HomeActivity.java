@@ -1,5 +1,6 @@
 package cpen442.securefileshare;
 
+import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -11,27 +12,24 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.view.menu.ListMenuItemView;
 import android.view.View;
 import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.HashMap;
 
 import javax.crypto.Cipher;
 
-import cpen442.securefileshare.encryption.DecryptionQueueFile;
 import cpen442.securefileshare.encryption.EncryptedPlusKey;
 import cpen442.securefileshare.encryption.EncryptionException;
 import cpen442.securefileshare.encryption.FileEncyrption;
+import cpen442.securefileshare.encryption.FileFormat;
+import cpen442.securefileshare.encryption.FormatException;
 import cpen442.securefileshare.encryption.FileIO;
 import cpen442.securefileshare.encryption.HashByteWrapper;
 
@@ -42,7 +40,8 @@ public class HomeActivity extends AppCompatActivity {
     private FingerprintAuthenticationDialogFragment fragment;
     private String jobId;
     private static final String ENCRYPTED_FILE_EXTENTION = ".crypt";
-    private ArrayList<DecryptionQueueFile> DecryptionQueue= new ArrayList<DecryptionQueueFile>();
+    private HashMap<Integer,Object> permissionMap = new HashMap<Integer, Object>();
+    private int PermissionNumber = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,7 +83,7 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     public void decryptBtnClick(View v) {
-        decrypt();
+
     }
 
     public void reqListBtnClick(View v) {
@@ -103,32 +102,180 @@ public class HomeActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case Constants.PERMISSION_READ_PHONE_STATE: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // Permission granted
-                } else {
-                    // Don't do anything then..
-                }
-                break;
-            }
-            case Constants.PERMISSION_READ_SMS: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // Permission granted
-                    if(fragment != null) {
-                        fragment.readSMSSecret();
+        if(grantResults.length == permissions.length) {
+            int i;
+            switch (i = permissions.length) {
+                case 1: {
+                    switch (permissions[i]) {
+                        case Manifest.permission.READ_PHONE_STATE: {
+                            if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+
+                            } else {
+
+                            }
+                            break;
+                        }
+                        case Manifest.permission.READ_SMS: {
+                            if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+
+                            } else {
+
+                            }
+                            break;
+                        }
+                        case Manifest.permission.READ_EXTERNAL_STORAGE: {
+                            if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                                handleFileAccessPermissionResult((FileAccessPermision) permissionMap.get(requestCode));
+                            } else {
+
+                            }
+                            break;
+                        }
+                        case Manifest.permission.WRITE_EXTERNAL_STORAGE: {
+                            if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                                handleFileAccessPermissionResult((FileAccessPermision) permissionMap.get(requestCode));
+                            } else {
+
+                            }
+                            break;
+                        }
+                        default: {
+
+                        }
                     }
-                } else {
-                    // Don't do anything then..
                 }
-                break;
+                case 2: {
+                    boolean allGranted = true;
+                    for (int g : grantResults) {
+                        if (g != PackageManager.PERMISSION_GRANTED) {
+                            allGranted = false;
+                        }
+                    }
+                    if (allGranted){
+                        boolean isFileAccess = true;
+                        for (String p : permissions){
+                            if (p != Manifest.permission.WRITE_EXTERNAL_STORAGE
+                                    || p != Manifest.permission.READ_EXTERNAL_STORAGE) {
+                                isFileAccess = false;
+                            }
+                        }
+                        if (isFileAccess) {
+                            handleFileAccessPermissionResult((FileAccessPermision) permissionMap.get(requestCode));
+                        }
+                    }
+
+                }
+                default: {
+                    // do nothing
+                }
             }
         }
-        return;
+        permissionMap.remove(requestCode);
+    }
+
+    private void handleFileAccessPermissionResult(FileAccessPermision fileAccessInfo) {
+        switch (fileAccessInfo.purpose) {
+            case Encrypt_read:
+                if (!readFile(fileAccessInfo)) {
+                    return;
+                }
+                try {
+                    EncryptedPlusKey EPK = FileEncyrption.EncryptFile(fileAccessInfo.filePath, fileAccessInfo.fileData);
+                    fileAccessInfo.fileData = EPK.encryptedFile;
+
+                    Toast.makeText(this, "Encrypted", Toast.LENGTH_SHORT).show();
+                    byte[] fileHash = HashByteWrapper.computeHash(EPK.encryptedFile);
+
+                    addKeyRequest(fileHash, EPK.key);
+                    Toast.makeText(this, "Sent Key", Toast.LENGTH_SHORT).show();
+
+                } catch (EncryptionException e) {
+                    Toast.makeText(this, "Encryption Failed", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                //Fallthrough
+                fileAccessInfo.purpose = FileAccessPermision.Purpose.Encrypt_write;
+            case Encrypt_write:
+                if (!writeToFile(fileAccessInfo)) {
+                    return;
+                }
+                break;
+            case Decrypt_read:
+                if (!readFile(fileAccessInfo)) {
+                    return;
+                }
+                fileAccessInfo.purpose = FileAccessPermision.Purpose.toDecrypt_write;
+            case toDecrypt_write:
+                if (!writeToFile(fileAccessInfo)) {
+                    return;
+                }
+                byte[] fileHash = HashByteWrapper.computeHash(fileAccessInfo.fileData);
+                requestKey(fileAccessInfo.targetID, fileHash);
+                break;
+            case toDecrypt_read:
+                if (!readFile(fileAccessInfo)) {
+                    return;
+                }
+                try {
+                    FileFormat ff = FileEncyrption.DecryptFile(fileAccessInfo.filePath,
+                            fileAccessInfo.key);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (EncryptionException e) {
+                    Toast.makeText(this, "Decryption Failed", Toast.LENGTH_SHORT).show();
+                    return;
+                } catch (FormatException e) {
+                    Toast.makeText(this, "File Format Exception", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                fileAccessInfo.purpose = FileAccessPermision.Purpose.Decrypt_write;
+            case Decrypt_write:
+                writeToFile(fileAccessInfo);
+                break;
+            default:
+                Toast.makeText(this, "Shouldn't be here", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private boolean readFile(FileAccessPermision fInfo){
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            permissionMap.put(PermissionNumber, fInfo);
+            requestPermissions(new String[]{
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+            }, PermissionNumber);
+            PermissionNumber++;
+            return false;
+        }
+        try {
+            fInfo.fileData = FileIO.ReadAllBytes(fInfo.filePath);
+            return true;
+        } catch (IOException e) {
+            Toast.makeText(this, "Error reading file", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+    }
+
+    private boolean writeToFile(FileAccessPermision fInfo){
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            permissionMap.put(PermissionNumber, fInfo);
+            requestPermissions(new String[]{
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+            }, PermissionNumber);
+            PermissionNumber++;
+            return false;
+        }
+        try {
+            FileIO.WriteAllBytes(fInfo.filePath, fInfo.fileData);
+        } catch (IOException e) {
+            Toast.makeText(this, "Error writing to file", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        return true;
     }
 
     //Adds key
@@ -147,38 +294,20 @@ public class HomeActivity extends AppCompatActivity {
             makeRequest(this, Constants.ADD_KEY_URL, requestParams);
         }
     }
-    public void requestKey(byte[] fileHash){
+    public void requestKey(String targetId, byte[] fileHash){
         JSONObject requestParams = new JSONObject();
         String userId = mSharedPreferences.getString(
                 Constants.SHARED_PREF_USER_ID, Constants.INVALID_USER_ID);
         if(!userId.equals(Constants.INVALID_USER_ID)) {
             try {
                 requestParams.put("userID", userId);
+                requestParams.put("targetID", targetId);
                 requestParams.put("fileHash", KeyStoreInterface.toBase64String(fileHash));
             } catch (JSONException e) {
                 e.printStackTrace();
             }
             makeRequest(this, Constants.REQUEST_KEY_URL, requestParams);
         }
-    }
-
-    // Decrypt request
-    public void decrypt() {
-        JSONObject requestParams = new JSONObject();
-        String userId = mSharedPreferences.getString(
-                Constants.SHARED_PREF_USER_ID, Constants.INVALID_USER_ID);
-        if(!userId.equals(Constants.INVALID_USER_ID)) {
-            String targetId = userId;
-            String fileHash = "123456";
-            try {
-                requestParams.put("userID", userId);
-                requestParams.put("targetID", targetId);
-                requestParams.put("fileHash", fileHash);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-        makeRequest(this, Constants.REQUEST_KEY_URL, requestParams);
     }
 
     // Get jobs
@@ -207,31 +336,16 @@ public class HomeActivity extends AppCompatActivity {
             Uri fileUri = data.getData();
             String filePath = fileUri.toString();
             if (requestCode == Constants.FILE_CHOOSER_ENCRYPT) {
-                try {
-                    EncryptedPlusKey EPK = FileEncyrption.EncryptFile(filePath);
-                    Toast.makeText(this, "Encrypted", Toast.LENGTH_SHORT).show();
-                    byte[] fileHash = HashByteWrapper.computeHash(EPK.encryptedFile);
-                    addKeyRequest(fileHash, EPK.key);
-                    Toast.makeText(this, "Sent Key", Toast.LENGTH_SHORT).show();
-
-                    // write to file
-                    FileIO.WriteAllBytes(filePath + ENCRYPTED_FILE_EXTENTION, EPK.encryptedFile);
-                } catch (IOException e) {
-                    Toast.makeText(this, "IO Exception", Toast.LENGTH_SHORT).show();
-                } catch (EncryptionException e) {
-                    Toast.makeText(this, "Encryption Failed", Toast.LENGTH_SHORT).show();
-                }
+                //request p
+                FileAccessPermision fInfo = new FileAccessPermision();
+                fInfo.purpose = FileAccessPermision.Purpose.Encrypt_read;
+                fInfo.filePath = filePath;
+                handleFileAccessPermissionResult(fInfo);
             } else if (requestCode == Constants.FILE_CHOOSER_DECRYPT) {
-                try {
-                    byte[] fileHash = HashByteWrapper.computeHash(FileIO.ReadAllBytes(filePath));
-                    DecryptionQueueFile DQF = new DecryptionQueueFile(filePath, fileHash);
-                    requestKey(fileHash);
-                    Toast.makeText(this, "Requested Key", Toast.LENGTH_SHORT).show();
-                    DecryptionQueue.add(DQF); // move file to "toDecrypt" folder
-                } catch (IOException e) {
-                    Toast.makeText(this, "IO Exception", Toast.LENGTH_SHORT).show();
-                }
-
+                FileAccessPermision fInfo = new FileAccessPermision();
+                fInfo.purpose = FileAccessPermision.Purpose.Decrypt_read;
+                fInfo.filePath = filePath;
+                handleFileAccessPermissionResult(fInfo);
             }
         }
     }
