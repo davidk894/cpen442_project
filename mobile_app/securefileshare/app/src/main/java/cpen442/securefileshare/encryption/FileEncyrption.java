@@ -11,7 +11,7 @@ import javax.crypto.SecretKey;
 public class FileEncyrption {
 
     //returns the key
-    public byte[] EncryptFile(String inputFileFolder, String inputFileName, String outputFileFolder, String outputFileName) throws IOException, EncryptionException {
+    public static byte[] EncryptFile(String inputFileFolder, String inputFileName, String outputFileFolder, String outputFileName) throws IOException, EncryptionException {
         String inputFilePath = FileIO.combine(inputFileFolder, inputFileName);
         byte[] fileBytes = FileIO.ReadAllBytes(inputFilePath);
         FileFormat FF = new FileFormat(fileBytes, inputFileName);
@@ -22,7 +22,7 @@ public class FileEncyrption {
         return key.getEncoded();
     }
 
-    public FileFormat DecryptFile(String filePath, byte[] key) throws IOException, EncryptionException, FileFormatException {
+    public static FileFormat DecryptFile(String filePath, byte[] key) throws IOException, EncryptionException, FileFormatException {
         byte[] encryptedFileBytes = FileIO.ReadAllBytes(filePath);
         byte[] decryptedBytes = EncryptionWrapper.decrypt(encryptedFileBytes, Encryption.toKey(key));
         return new FileFormat(decryptedBytes);

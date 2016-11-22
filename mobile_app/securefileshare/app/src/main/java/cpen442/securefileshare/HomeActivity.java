@@ -19,9 +19,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 
 import javax.crypto.Cipher;
+
+import cpen442.securefileshare.encryption.EncryptionException;
+import cpen442.securefileshare.encryption.FileEncyrption;
 
 public class HomeActivity extends AppCompatActivity {
 
@@ -161,8 +165,18 @@ public class HomeActivity extends AppCompatActivity {
             Uri fileUri = data.getData();
             String filePath = fileUri.toString();
             File file = new File(filePath);
-            if (requestCode == Constants.FILE_CHOOSER_ENCRYPT) {
+            String fileName = file.getName();
+            String fileDir = file.getParent();
 
+            if (requestCode == Constants.FILE_CHOOSER_ENCRYPT) {
+                try {
+                    byte[] key = FileEncyrption.EncryptFile(fileDir, fileName, fileDir, fileName + ENCRYPTED_FILE_EXTENTION);
+                    Toast.makeText("Encrypte,d" )
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (EncryptionException e) {
+                    e.printStackTrace();
+                }
             } else if (requestCode == Constants.FILE_CHOOSER_DECRYPT) {
 
             }
