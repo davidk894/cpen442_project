@@ -171,11 +171,12 @@ public class HomeActivity extends AppCompatActivity {
             if (requestCode == Constants.FILE_CHOOSER_ENCRYPT) {
                 try {
                     byte[] key = FileEncyrption.EncryptFile(fileDir, fileName, fileDir, fileName + ENCRYPTED_FILE_EXTENTION);
-                    Toast.makeText("Encrypte,d" )
+                    Toast.makeText(this, "Encrypted", Toast.LENGTH_SHORT).show();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    Toast.makeText(this, "IO Exception", Toast.LENGTH_SHORT).show();
                 } catch (EncryptionException e) {
-                    e.printStackTrace();
+                    Toast.makeText(this, "Encryption Failed", Toast.LENGTH_SHORT).show();
+
                 }
             } else if (requestCode == Constants.FILE_CHOOSER_DECRYPT) {
 
