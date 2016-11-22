@@ -28,9 +28,9 @@ public class Constants {
 
     //URLS
     public static final String ADD_KEY_URL = "https://zb9evmcr90.execute-api.us-west-2.amazonaws.com/Prod/add-key";
-    public static final String REQUEST_KEY_URL = "test";
+    public static final String REQUEST_KEY_URL = "https://zb9evmcr90.execute-api.us-west-2.amazonaws.com/Prod/request-key";
     public static final String AUTHORIZE_KEY_URL = "test";
-    public static final String GET_JOB_LIST_URL ="test";
+    public static final String GET_JOB_LIST_URL ="https://zb9evmcr90.execute-api.us-west-2.amazonaws.com/Prod/get-jobs";
     public static final String CREATE_ACCOUNT_URL = "https://zb9evmcr90.execute-api.us-west-2.amazonaws.com/Prod/create-account";
     public static final String AUTHENTICATE_URL = "https://zb9evmcr90.execute-api.us-west-2.amazonaws.com/Prod/do-job";
 }

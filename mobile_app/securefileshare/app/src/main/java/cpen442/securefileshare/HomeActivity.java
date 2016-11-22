@@ -76,10 +76,12 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     public void decryptBtnClick(View v) {
-        showFileChooser(Constants.FILE_CHOOSER_DECRYPT);
+        decrypt();
     }
 
     public void reqListBtnClick(View v) {
+        Intent intent = new Intent(this, ReqListActivity.class);
+        startActivity(intent);
         // do nothing
     }
 
@@ -136,6 +138,19 @@ public class HomeActivity extends AppCompatActivity {
     // Decrypt request
     public void decrypt() {
         JSONObject requestParams = new JSONObject();
+        String userId = mSharedPreferences.getString(
+                Constants.SHARED_PREF_USER_ID, Constants.INVALID_USER_ID);
+        if(!userId.equals(Constants.INVALID_USER_ID)) {
+            String targetId = userId;
+            String fileHash = "123456";
+            try {
+                requestParams.put("userID", userId);
+                requestParams.put("targetID", targetId);
+                requestParams.put("fileHash", fileHash);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
         makeRequest(this, Constants.REQUEST_KEY_URL, requestParams);
     }
 
