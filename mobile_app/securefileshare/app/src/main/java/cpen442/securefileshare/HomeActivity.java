@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.view.menu.ListMenuItemView;
 import android.view.View;
 import android.widget.Toast;
 
@@ -21,11 +22,18 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.crypto.Cipher;
 
+import cpen442.securefileshare.encryption.DecryptionQueueFile;
+import cpen442.securefileshare.encryption.EncryptedPlusKey;
 import cpen442.securefileshare.encryption.EncryptionException;
 import cpen442.securefileshare.encryption.FileEncyrption;
+import cpen442.securefileshare.encryption.FileIO;
+import cpen442.securefileshare.encryption.HashByteWrapper;
 
 public class HomeActivity extends AppCompatActivity {
 
@@ -34,6 +42,7 @@ public class HomeActivity extends AppCompatActivity {
     private FingerprintAuthenticationDialogFragment fragment;
     private String jobId;
     private static final String ENCRYPTED_FILE_EXTENTION = ".crypt";
+    private ArrayList<DecryptionQueueFile> DecryptionQueue= new ArrayList<DecryptionQueueFile>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,8 +80,7 @@ public class HomeActivity extends AppCompatActivity {
 
     // Button click listeners
     public void encryptBtnClick(View v) {
-        encrypt();
-//        showFileChooser(Constants.FILE_CHOOSER_ENCRYPT);
+        showFileChooser(Constants.FILE_CHOOSER_ENCRYPT);
     }
 
     public void decryptBtnClick(View v) {
@@ -117,21 +125,34 @@ public class HomeActivity extends AppCompatActivity {
         return;
     }
 
-    // Encrypt and add key
-    public void encrypt() {
-        //do encrypt
+    //Adds key
+    public void addKeyRequest(byte[] fileHash, byte[] key) {
         JSONObject requestParams = new JSONObject();
         String userId = mSharedPreferences.getString(
                 Constants.SHARED_PREF_USER_ID, Constants.INVALID_USER_ID);
         if(!userId.equals(Constants.INVALID_USER_ID)) {
             try {
                 requestParams.put("userID", userId);
-                requestParams.put("fileHash", "123456");
-                requestParams.put("key", "123456");
+                requestParams.put("fileHash", KeyStoreInterface.toBase64String(fileHash));
+                requestParams.put("key", KeyStoreInterface.toBase64String(key));
             } catch (JSONException e) {
                 e.printStackTrace();
             }
             makeRequest(this, Constants.ADD_KEY_URL, requestParams);
+        }
+    }
+    public void requestKey(byte[] fileHash){
+        JSONObject requestParams = new JSONObject();
+        String userId = mSharedPreferences.getString(
+                Constants.SHARED_PREF_USER_ID, Constants.INVALID_USER_ID);
+        if(!userId.equals(Constants.INVALID_USER_ID)) {
+            try {
+                requestParams.put("userID", userId);
+                requestParams.put("fileHash", KeyStoreInterface.toBase64String(fileHash));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            makeRequest(this, Constants.REQUEST_KEY_URL, requestParams);
         }
     }
 
@@ -179,21 +200,31 @@ public class HomeActivity extends AppCompatActivity {
         if (resultCode == RESULT_OK) {
             Uri fileUri = data.getData();
             String filePath = fileUri.toString();
-            File file = new File(filePath);
-            String fileName = file.getName();
-            String fileDir = file.getParent();
-
             if (requestCode == Constants.FILE_CHOOSER_ENCRYPT) {
                 try {
-                    byte[] key = FileEncyrption.EncryptFile(fileDir, fileName, fileDir, fileName + ENCRYPTED_FILE_EXTENTION);
+                    EncryptedPlusKey EPK = FileEncyrption.EncryptFile(filePath);
                     Toast.makeText(this, "Encrypted", Toast.LENGTH_SHORT).show();
+                    byte[] fileHash = HashByteWrapper.computeHash(EPK.encryptedFile);
+                    addKeyRequest(fileHash, EPK.key);
+                    Toast.makeText(this, "Sent Key", Toast.LENGTH_SHORT).show();
+
+                    // write to file
+                    FileIO.WriteAllBytes(filePath + ENCRYPTED_FILE_EXTENTION, EPK.encryptedFile);
                 } catch (IOException e) {
                     Toast.makeText(this, "IO Exception", Toast.LENGTH_SHORT).show();
                 } catch (EncryptionException e) {
                     Toast.makeText(this, "Encryption Failed", Toast.LENGTH_SHORT).show();
-
                 }
             } else if (requestCode == Constants.FILE_CHOOSER_DECRYPT) {
+                try {
+                    byte[] fileHash = HashByteWrapper.computeHash(FileIO.ReadAllBytes(filePath));
+                    DecryptionQueueFile DQF = new DecryptionQueueFile(filePath, fileHash);
+                    requestKey(fileHash);
+                    Toast.makeText(this, "Requested Key", Toast.LENGTH_SHORT).show();
+                    DecryptionQueue.add(DQF); // move file to "toDecrypt" folder
+                } catch (IOException e) {
+                    Toast.makeText(this, "IO Exception", Toast.LENGTH_SHORT).show();
+                }
 
             }
         }
