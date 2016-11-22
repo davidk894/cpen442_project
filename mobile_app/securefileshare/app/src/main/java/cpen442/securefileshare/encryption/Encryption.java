@@ -66,6 +66,7 @@ public class Encryption {
     public static byte[] generateSecureRandom(int numberOfBytes) {
         byte[] buff = new byte[numberOfBytes];
         SecureRandom random = new SecureRandom();
+        random.nextBytes(buff);
         return buff;
     }
 
