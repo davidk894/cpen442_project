@@ -87,14 +87,28 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void testFunction(View v) {
-        SharedPreferences.Editor editor = mSharedPreferences.edit();
-        editor.remove(Constants.SHARED_PREF_USER_ID);
-        editor.remove(Constants.SHARED_PREF_FP_SECRET);
-        System.out.println("Removed shared prefs");
-        if(KeyStoreInterface.keyExists()) {
-            KeyStoreInterface.removeKey();
-            System.out.println("Removed key");
-        }
+//        SharedPreferences.Editor editor = mSharedPreferences.edit();
+//        editor.remove(Constants.SHARED_PREF_USER_ID);
+//        editor.remove(Constants.SHARED_PREF_FP_SECRET);
+//        System.out.println("Removed shared prefs");
+//        if(KeyStoreInterface.keyExists()) {
+//            KeyStoreInterface.removeKey();
+//            System.out.println("Removed key");
+//        }
+        Intent intent = new Intent(this, ReqListActivity.class);
+        String jobsListJson =
+                "[" +
+                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"1\"}," +
+                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"1\"}," +
+                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"1\"}," +
+                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"1\"}," +
+                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"1\"}," +
+                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"1\"}," +
+                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"1\"}," +
+                    "{\"userID\": \"111111\", \"fileHash\": \"111111\", \"jobID\":111111\", \"jobType\":\"1\"}" +
+                "]";
+        intent.putExtra(Constants.JOBS_LIST_JSON, jobsListJson);
+        startActivity(intent);
     }
 
     // Permissions

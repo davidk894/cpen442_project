@@ -128,8 +128,7 @@ public class KeyStoreInterface {
 
     public static byte[] toBytes(String base64) {
         byte[] data = base64.getBytes(StandardCharsets.UTF_8);
-        byte[] retval = Base64.decode(data, Base64.DEFAULT);
-        return retval;
+        return Base64.decode(data, Base64.DEFAULT);
     }
 
     public static String generateCryptoMessage() {

@@ -81,6 +81,12 @@ public class HomeActivity extends AppCompatActivity {
 
     public void reqListBtnClick(View v) {
         Intent intent = new Intent(this, ReqListActivity.class);
+        String jobsListJson =
+                "[" +
+                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"123456\"}," +
+                    "{\"userID\": \"111111\", \"fileHash\": \"111111\", \"jobID\":111111\", \"jobType\":\"111111\"}" +
+                "]";
+        intent.putExtra(Constants.JOBS_LIST_JSON, jobsListJson);
         startActivity(intent);
         // do nothing
     }

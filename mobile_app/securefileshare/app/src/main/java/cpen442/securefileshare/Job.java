@@ -1,41 +1,39 @@
 package cpen442.securefileshare;
 
 public class Job {
-    private int JobType; // Got key or pending response
-    private String FileHash;
-    private String UserID;
-    private String JobID;
+    private int JobType; // Got key, pending response, or pending request
+    private String fileHash;
+    private String userID;
+    private String jobID;
 
     public int getJobType() {
         return JobType;
     }
 
-    public void setJobType(int jobType) {
-        JobType = jobType;
-    }
+    public void setJobType(int jobType) { jobType = jobType; }
 
     public String getFileHash() {
-        return FileHash;
+        return fileHash;
     }
 
     public void setFileHash(String fileHash) {
-        FileHash = fileHash;
+        fileHash = fileHash;
     }
 
     public String getUserID() {
-        return UserID;
+        return userID;
     }
 
     public void setUserID(String userID) {
-        UserID = userID;
+        userID = userID;
     }
 
     public String getJobID() {
-        return JobID;
+        return jobID;
     }
 
     public void setJobID(String jobID) {
-        JobID = jobID;
+        jobID = jobID;
     }
 
 }
