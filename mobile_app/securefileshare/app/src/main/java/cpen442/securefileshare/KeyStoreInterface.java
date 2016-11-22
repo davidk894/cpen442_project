@@ -122,12 +122,13 @@ public class KeyStoreInterface {
     }
 
     public static String toBase64String(byte[] bytes){
-        byte[] data = Base64.decode(bytes, Base64.DEFAULT);
+        byte[] data = Base64.encode(bytes, Base64.DEFAULT);
         return new String(data, StandardCharsets.UTF_8);
     }
 
     public static byte[] toBytes(String base64) {
-        return base64.getBytes(StandardCharsets.UTF_8);
+        byte[] data = base64.getBytes(StandardCharsets.UTF_8);
+        return Base64.decode(data, Base64.DEFAULT);
     }
 
     public static String generateCryptoMessage() {

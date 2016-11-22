@@ -7,6 +7,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.hardware.fingerprint.FingerprintManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
@@ -17,6 +18,9 @@ import android.widget.Toast;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.net.URI;
+
 import javax.crypto.Cipher;
 
 public class HomeActivity extends AppCompatActivity {
@@ -25,6 +29,7 @@ public class HomeActivity extends AppCompatActivity {
     private BroadcastReceiver fbReceiver;
     private FingerprintAuthenticationDialogFragment fragment;
     private String jobId;
+    private static final String ENCRYPTED_FILE_EXTENTION = ".crypt";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -140,17 +145,14 @@ public class HomeActivity extends AppCompatActivity {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == Constants.FILE_CHOOSER_ENCRYPT) {
-            // Make sure the request was successful
-            if (resultCode == RESULT_OK) {
-                // The user picked a file.
-                // The Intent's data is our file..?
+        if (resultCode == RESULT_OK) {
+            Uri fileUri = data.getData();
+            String filePath = fileUri.toString();
+            File file = new File(filePath);
+            if (requestCode == Constants.FILE_CHOOSER_ENCRYPT) {
 
-                // do something with the file
-            }
-        } else if (requestCode == Constants.FILE_CHOOSER_DECRYPT) {
-            if (resultCode == RESULT_OK) {
-                // woo
+            } else if (requestCode == Constants.FILE_CHOOSER_DECRYPT) {
+
             }
         }
     }
