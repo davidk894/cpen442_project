@@ -23,6 +23,7 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
 
 
 public class KeyStoreInterface {
@@ -127,7 +128,9 @@ public class KeyStoreInterface {
     }
 
     public static byte[] toBytes(String base64) {
-        return base64.getBytes(StandardCharsets.UTF_8);
+        byte[] data = base64.getBytes(StandardCharsets.UTF_8);
+//        return Base64.encode(data, Base64.DEFAULT);
+        return data;
     }
 
     public static String generateCryptoMessage() {

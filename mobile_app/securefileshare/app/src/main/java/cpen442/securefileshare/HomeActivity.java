@@ -62,7 +62,8 @@ public class HomeActivity extends AppCompatActivity {
 
     // Button click listeners
     public void encryptBtnClick(View v) {
-        showFileChooser(Constants.FILE_CHOOSER_ENCRYPT);
+        encrypt();
+//        showFileChooser(Constants.FILE_CHOOSER_ENCRYPT);
     }
 
     public void decryptBtnClick(View v) {
@@ -109,7 +110,18 @@ public class HomeActivity extends AppCompatActivity {
     public void encrypt() {
         //do encrypt
         JSONObject requestParams = new JSONObject();
-        makeRequest(this, Constants.ADD_KEY_URL, requestParams);
+        String userId = mSharedPreferences.getString(
+                Constants.SHARED_PREF_USER_ID, Constants.INVALID_USER_ID);
+        if(!userId.equals(Constants.INVALID_USER_ID)) {
+            try {
+                requestParams.put("userID", userId);
+                requestParams.put("fileHash", "123456");
+                requestParams.put("key", "123456");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            makeRequest(this, Constants.ADD_KEY_URL, requestParams);
+        }
     }
 
     // Decrypt request

@@ -90,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences.Editor editor = mSharedPreferences.edit();
         editor.remove(Constants.SHARED_PREF_USER_ID);
         editor.remove(Constants.SHARED_PREF_FP_SECRET);
+        editor.remove(Constants.SHARED_PREF_FP_SECRET_IV);
         System.out.println("Removed shared prefs");
         if(KeyStoreInterface.keyExists()) {
             KeyStoreInterface.removeKey();
