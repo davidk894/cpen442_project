@@ -1,4 +1,4 @@
-package cpen442.securefileshare.cpen442.encryption;
+package cpen442.securefileshare.encryption;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;

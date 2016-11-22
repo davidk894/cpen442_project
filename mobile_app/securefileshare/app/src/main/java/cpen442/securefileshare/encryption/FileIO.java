@@ -1,4 +1,4 @@
-package cpen442.securefileshare.cpen442.encryption;
+package cpen442.securefileshare.encryption;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;

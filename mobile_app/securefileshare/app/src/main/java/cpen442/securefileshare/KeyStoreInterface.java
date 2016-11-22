@@ -29,9 +29,7 @@ import javax.crypto.spec.IvParameterSpec;
 public class KeyStoreInterface {
     private static final String AKeyStore_String = "AndroidKeyStore";
     private static final String KEY_NAME = "FingerPrintKey12345";
-    private static final String cipherMode = "AES/CBC/PKCS7Padding";
-    private static final char[] VALID_CHARACTERS =
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456879".toCharArray();
+    private static final String cipherMode = "AES/ECB/NoPadding";
     private static final int MESSAGE_SIZE = 16;
     private static final boolean invalidatedByBiometricEnrollment = true;
 
@@ -61,9 +59,10 @@ public class KeyStoreInterface {
         }
         KeyGenParameterSpec.Builder builder = new KeyGenParameterSpec.Builder(KEY_NAME,
                 KeyProperties.PURPOSE_DECRYPT | KeyProperties.PURPOSE_ENCRYPT)
-                .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
-                .setUserAuthenticationRequired(true) 
-                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7);
+                .setBlockModes(KeyProperties.BLOCK_MODE_ECB)
+                .setUserAuthenticationRequired(true)
+                .setRandomizedEncryptionRequired(false)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             builder.setInvalidatedByBiometricEnrollment(invalidatedByBiometricEnrollment);
         }
@@ -123,14 +122,14 @@ public class KeyStoreInterface {
     }
 
     public static String toBase64String(byte[] bytes){
-        byte[] data = Base64.decode(bytes, Base64.DEFAULT);
+        byte[] data = Base64.encode(bytes, Base64.DEFAULT);
         return new String(data, StandardCharsets.UTF_8);
     }
 
     public static byte[] toBytes(String base64) {
         byte[] data = base64.getBytes(StandardCharsets.UTF_8);
-//        return Base64.encode(data, Base64.DEFAULT);
-        return data;
+        byte[] retval = Base64.decode(data, Base64.DEFAULT);
+        return retval;
     }
 
     public static String generateCryptoMessage() {
@@ -138,16 +137,10 @@ public class KeyStoreInterface {
     }
 
     private static String generateSecureRandom(int numberOfBytes) {
-        char[] buff = new char[numberOfBytes];
+        byte[] buff = new byte[numberOfBytes];
         SecureRandom secureRandom = new SecureRandom();
-        Random rand = new Random();
-        for (int i = 0; i < numberOfBytes; ++i) {
-            // reseed rand once you've used up all available entropy bits
-            if ((i % 10) == 0) {
-                rand.setSeed(secureRandom.nextLong()); // 64 bits of random!
-            }
-            buff[i] = VALID_CHARACTERS[rand.nextInt(VALID_CHARACTERS.length)];
-        }
-        return new String(buff);
+        secureRandom.nextBytes(buff);
+        String randomString = toBase64String(buff);
+        return randomString;
     }
 }

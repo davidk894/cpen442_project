@@ -1,4 +1,4 @@
-package cpen442.securefileshare.cpen442.encryption;
+package cpen442.securefileshare.encryption;
 
 /**
  * Created by Cyberus on 2016-11-07.

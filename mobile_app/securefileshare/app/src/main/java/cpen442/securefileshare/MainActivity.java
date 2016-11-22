@@ -90,7 +90,6 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences.Editor editor = mSharedPreferences.edit();
         editor.remove(Constants.SHARED_PREF_USER_ID);
         editor.remove(Constants.SHARED_PREF_FP_SECRET);
-        editor.remove(Constants.SHARED_PREF_FP_SECRET_IV);
         System.out.println("Removed shared prefs");
         if(KeyStoreInterface.keyExists()) {
             KeyStoreInterface.removeKey();
@@ -144,8 +143,7 @@ public class MainActivity extends AppCompatActivity {
             JSONObject reqParams = new JSONObject();
             TelephonyManager mgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
             fpSecret = KeyStoreInterface.generateCryptoMessage();
-//            String phoneNumber = "+" + mgr.getLine1Number();
-            String phoneNumber = "+16047809817";
+            String phoneNumber = "+" + mgr.getLine1Number();
             String fcmToken = FirebaseInstanceId.getInstance().getToken();
             try {
                 reqParams.put("firebaseID", fcmToken);
