@@ -2,6 +2,10 @@
     <string name="app_name">Secure File Share</string>
     <string name="no_existing_account">Please create an account first</string>
 
+    <!-- Request List -->
+    <string name="user_id_label">User ID:</string>
+    <string name="file_hash_label">File Hash:</string>
+
     <!-- Authentication dialog -->
     <string name="cancel_button">Cancel</string>
     <string name="next_button">Next</string>

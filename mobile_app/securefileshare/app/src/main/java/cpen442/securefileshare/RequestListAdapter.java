@@ -29,8 +29,8 @@ public class RequestListAdapter extends ArrayAdapter<Job> {
                 v = convertView;
             }
 
-            TextView userIdItem = (TextView) v.findViewById(R.id.list_item_user_id);
-            TextView fileHashItem = (TextView) v.findViewById(R.id.list_item_file_hash);
+            TextView userIdItem = (TextView) v.findViewById(R.id.list_item_user_id_field);
+            TextView fileHashItem = (TextView) v.findViewById(R.id.list_item_file_hash_field);
 
             userIdItem.setText(item.getUserID());
             fileHashItem.setText(item.getFileHash());
