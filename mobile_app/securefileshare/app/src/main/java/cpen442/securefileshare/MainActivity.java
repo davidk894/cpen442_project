@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.hardware.fingerprint.FingerprintManager;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -24,6 +25,9 @@ import com.google.firebase.iid.FirebaseInstanceId;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+
+import java.util.HashMap;
+
 import javax.crypto.Cipher;
 
 
@@ -34,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
     private FingerprintAuthenticationDialogFragment fragment;
     private String fpSecret;
     private String jobId;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -143,6 +148,7 @@ public class MainActivity extends AppCompatActivity {
         }
         return;
     }
+
 
     // Create account
     public void createAccount() {
