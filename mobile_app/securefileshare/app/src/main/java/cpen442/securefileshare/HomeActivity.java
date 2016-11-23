@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.hardware.fingerprint.FingerprintManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
@@ -20,11 +21,13 @@ import android.widget.Toast;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 
 import javax.crypto.Cipher;
 
+import cpen442.securefileshare.encryption.EncryptedFileFormat;
 import cpen442.securefileshare.encryption.EncryptedPlusKey;
 import cpen442.securefileshare.encryption.EncryptionException;
 import cpen442.securefileshare.encryption.FileEncyrption;
@@ -32,6 +35,7 @@ import cpen442.securefileshare.encryption.FileFormat;
 import cpen442.securefileshare.encryption.FormatException;
 import cpen442.securefileshare.encryption.FileIO;
 import cpen442.securefileshare.encryption.HashByteWrapper;
+import cpen442.securefileshare.encryption.Utility;
 
 public class HomeActivity extends AppCompatActivity {
 
@@ -39,7 +43,13 @@ public class HomeActivity extends AppCompatActivity {
     private BroadcastReceiver fbReceiver;
     private FingerprintAuthenticationDialogFragment fragment;
     private String jobId;
+    private String To_Decrypt_Folder_Name = "SecureFileShare_ToDecrypt";
+    private String externalStorageDir = Environment.getExternalStorageDirectory().toString();
+    private String toDecrypt_Path_Full = FileIO.combine(externalStorageDir, To_Decrypt_Folder_Name);
+    private String Decrypted_Folder_Name = "SecureFileShare_Decrypted";
+    private String Decrypted_Path_Full = FileIO.combine(externalStorageDir, Decrypted_Folder_Name);
     private static final String ENCRYPTED_FILE_EXTENTION = ".crypt";
+
     private HashMap<Integer,Object> permissionMap = new HashMap<Integer, Object>();
     private int PermissionNumber = 0;
 
@@ -82,9 +92,7 @@ public class HomeActivity extends AppCompatActivity {
         showFileChooser(Constants.FILE_CHOOSER_ENCRYPT);
     }
 
-    public void decryptBtnClick(View v) {
-
-    }
+    public void decryptBtnClick(View v) { showFileChooser(Constants.FILE_CHOOSER_DECRYPT); }
 
     public void reqListBtnClick(View v) {
         Intent intent = new Intent(this, ReqListActivity.class);
@@ -154,8 +162,8 @@ public class HomeActivity extends AppCompatActivity {
                     if (allGranted){
                         boolean isFileAccess = true;
                         for (String p : permissions){
-                            if (p != Manifest.permission.WRITE_EXTERNAL_STORAGE
-                                    || p != Manifest.permission.READ_EXTERNAL_STORAGE) {
+                            if (!p.equals(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                                    || !p.equals(Manifest.permission.READ_EXTERNAL_STORAGE)) {
                                 isFileAccess = false;
                             }
                         }
@@ -173,18 +181,24 @@ public class HomeActivity extends AppCompatActivity {
         permissionMap.remove(requestCode);
     }
 
-    private void handleFileAccessPermissionResult(FileAccessPermision fileAccessInfo) {
+    public void handleFileAccessPermissionResult(FileAccessPermision fileAccessInfo) {
         switch (fileAccessInfo.purpose) {
             case Encrypt_read:
                 if (!readFile(fileAccessInfo)) {
                     return;
                 }
                 try {
-                    EncryptedPlusKey EPK = FileEncyrption.EncryptFile(fileAccessInfo.filePath, fileAccessInfo.fileData);
-                    fileAccessInfo.fileData = EPK.encryptedFile;
+                    String userId = mSharedPreferences.getString(
+                            Constants.SHARED_PREF_USER_ID, Constants.INVALID_USER_ID);
+                    if (userId.equals(Constants.INVALID_USER_ID)){
+                        Toast.makeText(this, "Invalid User ID", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    EncryptedPlusKey EPK = FileEncyrption.EncryptFile(fileAccessInfo.filePath, fileAccessInfo.fileData, userId);
+                    fileAccessInfo.fileData = EPK.encryptedFile.getEncryptedData();
 
                     Toast.makeText(this, "Encrypted", Toast.LENGTH_SHORT).show();
-                    byte[] fileHash = HashByteWrapper.computeHash(EPK.encryptedFile);
+                    byte[] fileHash = HashByteWrapper.computeHash(EPK.encryptedFile.toBytes());
 
                     addKeyRequest(fileHash, EPK.key);
                     Toast.makeText(this, "Sent Key", Toast.LENGTH_SHORT).show();
@@ -204,12 +218,29 @@ public class HomeActivity extends AppCompatActivity {
                 if (!readFile(fileAccessInfo)) {
                     return;
                 }
+
+                byte [] fileHash = HashByteWrapper.computeHash(fileAccessInfo.fileData);
+                String newFileName = Utility.toBase64String(fileHash) + ENCRYPTED_FILE_EXTENTION;
+                try {
+                    fileAccessInfo.targetID = new EncryptedFileFormat(fileAccessInfo.fileData).getUserId();
+                } catch (FormatException e) {
+                    Toast.makeText(this, "File Format Exception", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                fileAccessInfo.filePath = FileIO.combine(toDecrypt_Path_Full, newFileName);
                 fileAccessInfo.purpose = FileAccessPermision.Purpose.toDecrypt_write;
             case toDecrypt_write:
                 if (!writeToFile(fileAccessInfo)) {
                     return;
                 }
-                byte[] fileHash = HashByteWrapper.computeHash(fileAccessInfo.fileData);
+                File dir = new File( toDecrypt_Path_Full );
+                if (!dir.isDirectory()) {
+                    if(!dir.mkdir()){
+                        Toast.makeText(this, "Could not make dir", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                }
+                fileHash = HashByteWrapper.computeHash(fileAccessInfo.fileData);
                 requestKey(fileAccessInfo.targetID, fileHash);
                 break;
             case toDecrypt_read:
@@ -217,10 +248,11 @@ public class HomeActivity extends AppCompatActivity {
                     return;
                 }
                 try {
-                    FileFormat ff = FileEncyrption.DecryptFile(fileAccessInfo.filePath,
+                    EncryptedFileFormat eff = new EncryptedFileFormat(fileAccessInfo.fileData);
+                    FileFormat ff = FileEncyrption.DecryptFile(eff.getEncryptedData(),
                             fileAccessInfo.key);
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    fileAccessInfo.fileData = ff.GetFileBytes();
+                    fileAccessInfo.filePath = ff.getFileName();
                 } catch (EncryptionException e) {
                     Toast.makeText(this, "Decryption Failed", Toast.LENGTH_SHORT).show();
                     return;
@@ -230,6 +262,15 @@ public class HomeActivity extends AppCompatActivity {
                 }
                 fileAccessInfo.purpose = FileAccessPermision.Purpose.Decrypt_write;
             case Decrypt_write:
+                File DecrytpedDir = new File( Decrypted_Path_Full );
+                if (!DecrytpedDir.isDirectory()) {
+                    if(!DecrytpedDir.mkdir()){
+                        Toast.makeText(this, "Could not make dir", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                }
+                fileAccessInfo.filePath = FileIO.combine(Decrypted_Path_Full,
+                        fileAccessInfo.filePath);
                 writeToFile(fileAccessInfo);
                 break;
             default:
@@ -286,8 +327,8 @@ public class HomeActivity extends AppCompatActivity {
         if(!userId.equals(Constants.INVALID_USER_ID)) {
             try {
                 requestParams.put("userID", userId);
-                requestParams.put("fileHash", KeyStoreInterface.toBase64String(fileHash));
-                requestParams.put("key", KeyStoreInterface.toBase64String(key));
+                requestParams.put("fileHash", Utility.toBase64String(fileHash));
+                requestParams.put("key", Utility.toBase64String(key));
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -302,7 +343,7 @@ public class HomeActivity extends AppCompatActivity {
             try {
                 requestParams.put("userID", userId);
                 requestParams.put("targetID", targetId);
-                requestParams.put("fileHash", KeyStoreInterface.toBase64String(fileHash));
+                requestParams.put("fileHash", Utility.toBase64String(fileHash));
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -376,8 +417,8 @@ public class HomeActivity extends AppCompatActivity {
         String encryptedFPSecret = mSharedPreferences.getString(
                 Constants.SHARED_PREF_FP_SECRET, Constants.INVALID_FP_SECRET);
         if(!encryptedFPSecret.equals(Constants.INVALID_FP_SECRET)) {
-            String fpSecret = KeyStoreInterface.toBase64String(KeyStoreInterface.transform(
-                    cryptoObject.getCipher(), KeyStoreInterface.toBytes(encryptedFPSecret)));
+            String fpSecret = Utility.toBase64String(KeyStoreInterface.transform(
+                    cryptoObject.getCipher(), Utility.toBytes(encryptedFPSecret)));
             if (withFingerprint) {
                 JSONObject reqParams = new JSONObject();
                 try {

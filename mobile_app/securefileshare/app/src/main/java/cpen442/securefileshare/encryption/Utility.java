@@ -20,13 +20,13 @@ public class Utility {
     }
 
     public static String toBase64String(byte[] bytes){
-        byte[] data = Base64.encode(bytes, Base64.DEFAULT);
+        byte[] data = Base64.encode(bytes, Base64.NO_WRAP);
         return new String(data, StandardCharsets.UTF_8);
     }
 
     public static byte[] toBytes(String base64) {
         byte[] data = base64.getBytes(StandardCharsets.UTF_8);
-        byte[] retval = Base64.decode(data, Base64.DEFAULT);
+        byte[] retval = Base64.decode(data, Base64.NO_WRAP);
         return retval;
     }
 

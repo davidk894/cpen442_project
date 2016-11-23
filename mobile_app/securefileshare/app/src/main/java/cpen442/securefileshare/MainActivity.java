@@ -30,6 +30,8 @@ import java.util.HashMap;
 
 import javax.crypto.Cipher;
 
+import cpen442.securefileshare.encryption.Utility;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -247,8 +249,8 @@ public class MainActivity extends AppCompatActivity {
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            fpSecret = KeyStoreInterface.toBase64String(KeyStoreInterface.transform(
-                    cryptoObject.getCipher(), KeyStoreInterface.toBytes(fpSecret)));
+            fpSecret = Utility.toBase64String(KeyStoreInterface.transform(
+                    cryptoObject.getCipher(), Utility.toBytes(fpSecret)));
             authenticateRequest(this, reqParams);
         }
     }
