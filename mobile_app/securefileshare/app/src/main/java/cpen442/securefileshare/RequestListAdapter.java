@@ -34,7 +34,6 @@ public class RequestListAdapter extends ArrayAdapter<Job> {
 
             userIdItem.setText(item.getUserID());
             fileHashItem.setText(item.getFileHash());
-            // Add text components here by using v.findViewBy(blah).
             return v;
         } catch (Exception e) {
             e.printStackTrace();

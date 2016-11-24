@@ -114,6 +114,8 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
             ((MainActivity) mContext).onAuthenticated(smsSecret, true, mCryptoObject);
         } else if (mContext instanceof HomeActivity) {
             ((HomeActivity) mContext).onAuthenticated(smsSecret, true, mCryptoObject);
+        } else if (mContext instanceof ReqListActivity) {
+            ((ReqListActivity) mContext).onAuthenticated(smsSecret, true, mCryptoObject);
         }
     }
 

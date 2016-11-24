@@ -1,13 +1,17 @@
 package cpen442.securefileshare;
 
 public class Job {
-    private int JobType; // Got key, pending response, or pending request
+    private int jobType; // Got key, pending response, or pending request
     private String fileHash;
-    private String userID;
     private String jobID;
 
+    private String userID;
+
+    private String contactNumber;
+    private String name;
+
     public int getJobType() {
-        return JobType;
+        return jobType;
     }
 
     public void setJobType(int jobType) { jobType = jobType; }
@@ -36,4 +40,19 @@ public class Job {
         jobID = jobID;
     }
 
+    public String getContactNumber() {
+        return contactNumber;
+    }
+
+    public void setContactNumber(String contactNumber) {
+        this.contactNumber = contactNumber;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 }

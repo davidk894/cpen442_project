@@ -55,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
         if(fbReceiver != null) {
             unregisterReceiver(fbReceiver);
+            fbReceiver = null;
         }
     }
 
@@ -63,15 +64,15 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
         if(fbReceiver != null) {
             unregisterReceiver(fbReceiver);
+            fbReceiver = null;
         }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if(fbReceiver != null) {
-            registerReceiver(fbReceiver, new IntentFilter("FBMessage"));
-        }
+        fbReceiver = new FBReceiver();
+        registerReceiver(fbReceiver, new IntentFilter("FBMessage"));
     }
 
     // Button click listeners
@@ -92,28 +93,28 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void testFunction(View v) {
-//        SharedPreferences.Editor editor = mSharedPreferences.edit();
-//        editor.remove(Constants.SHARED_PREF_USER_ID);
-//        editor.remove(Constants.SHARED_PREF_FP_SECRET);
-//        System.out.println("Removed shared prefs");
-//        if(KeyStoreInterface.keyExists()) {
-//            KeyStoreInterface.removeKey();
-//            System.out.println("Removed key");
-//        }
-        Intent intent = new Intent(this, ReqListActivity.class);
-        String jobsListJson =
-                "[" +
-                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"1\"}," +
-                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"1\"}," +
-                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"1\"}," +
-                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"1\"}," +
-                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"1\"}," +
-                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"1\"}," +
-                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"1\"}," +
-                    "{\"userID\": \"111111\", \"fileHash\": \"111111\", \"jobID\":111111\", \"jobType\":\"1\"}" +
-                "]";
-        intent.putExtra(Constants.JOBS_LIST_JSON, jobsListJson);
-        startActivity(intent);
+        SharedPreferences.Editor editor = mSharedPreferences.edit();
+        editor.remove(Constants.SHARED_PREF_USER_ID);
+        editor.remove(Constants.SHARED_PREF_FP_SECRET);
+        System.out.println("Removed shared prefs");
+        if(KeyStoreInterface.keyExists()) {
+            KeyStoreInterface.removeKey();
+            System.out.println("Removed key");
+        }
+//        Intent intent = new Intent(this, ReqListActivity.class);
+//        String jobsListJson =
+//                "[" +
+//                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"8\", \"contactNumber\":\"1234567890\", \"name\":\"testuser\"}," +
+//                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"8\", \"contactNumber\":\"1234567890\", \"name\":\"testuser\"}," +
+//                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"8\", \"contactNumber\":\"1234567890\", \"name\":\"testuser\"}," +
+//                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"8\", \"contactNumber\":\"1234567890\", \"name\":\"testuser\"}," +
+//                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"8\", \"contactNumber\":\"1234567890\", \"name\":\"testuser\"}," +
+//                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"8\", \"contactNumber\":\"1234567890\", \"name\":\"testuser\"}," +
+//                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"8\", \"contactNumber\":\"1234567890\", \"name\":\"testuser\"}," +
+//                    "{\"userID\": \"111111\", \"fileHash\": \"111111\", \"jobID\":111111\", \"jobType\":\"9\", \"contactNumber\":\"1234567890\"}" +
+//                "]";
+//        intent.putExtra(Constants.JOBS_LIST_JSON, jobsListJson);
+//        startActivity(intent);
     }
 
     // Permissions
@@ -244,6 +245,7 @@ public class MainActivity extends AppCompatActivity {
                 reqParams.put("jobID", jobId);
                 reqParams.put("fpSecret", fpSecret);
                 reqParams.put("smsSecret", smsSecret);
+                reqParams.put("doJob", true);
             } catch (JSONException e) {
                 e.printStackTrace();
             }

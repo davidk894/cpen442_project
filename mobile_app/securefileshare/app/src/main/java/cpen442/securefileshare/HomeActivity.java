@@ -58,6 +58,7 @@ public class HomeActivity extends AppCompatActivity {
         super.onDestroy();
         if(fbReceiver != null) {
             unregisterReceiver(fbReceiver);
+            fbReceiver = null;
         }
     }
 
@@ -66,20 +67,33 @@ public class HomeActivity extends AppCompatActivity {
         super.onPause();
         if(fbReceiver != null) {
             unregisterReceiver(fbReceiver);
+            fbReceiver = null;
         }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if(fbReceiver != null) {
-            registerReceiver(fbReceiver, new IntentFilter("FBMessage"));
-        }
+        fbReceiver = new FBReceiver();
+        registerReceiver(fbReceiver, new IntentFilter("FBMessage"));
     }
 
     // Button click listeners
     public void encryptBtnClick(View v) {
         showFileChooser(Constants.FILE_CHOOSER_ENCRYPT);
+//        JSONObject requestParams = new JSONObject();
+//        String userId = mSharedPreferences.getString(
+//                Constants.SHARED_PREF_USER_ID, Constants.INVALID_USER_ID);
+//        if(!userId.equals(Constants.INVALID_USER_ID)) {
+//            try {
+//                requestParams.put("userID", userId);
+//                requestParams.put("fileHash", "1234567890");
+//                requestParams.put("key", "1234567890");
+//            } catch (JSONException e) {
+//                e.printStackTrace();
+//            }
+//            makeRequest(this, Constants.ADD_KEY_URL, requestParams);
+//        }
     }
 
     public void decryptBtnClick(View v) {
@@ -179,20 +193,20 @@ public class HomeActivity extends AppCompatActivity {
                 if (!readFile(fileAccessInfo)) {
                     return;
                 }
-                try {
-                    EncryptedPlusKey EPK = FileEncyrption.EncryptFile(fileAccessInfo.filePath, fileAccessInfo.fileData);
-                    fileAccessInfo.fileData = EPK.encryptedFile;
-
-                    Toast.makeText(this, "Encrypted", Toast.LENGTH_SHORT).show();
-                    byte[] fileHash = HashByteWrapper.computeHash(EPK.encryptedFile);
-
-                    addKeyRequest(fileHash, EPK.key);
-                    Toast.makeText(this, "Sent Key", Toast.LENGTH_SHORT).show();
-
-                } catch (EncryptionException e) {
-                    Toast.makeText(this, "Encryption Failed", Toast.LENGTH_SHORT).show();
-                    return;
-                }
+//                try {
+//                    EncryptedPlusKey EPK = FileEncyrption.EncryptFile(fileAccessInfo.filePath, fileAccessInfo.fileData);
+//                    fileAccessInfo.fileData = EPK.encryptedFile;
+//
+//                    Toast.makeText(this, "Encrypted", Toast.LENGTH_SHORT).show();
+//                    byte[] fileHash = HashByteWrapper.computeHash(EPK.encryptedFile);
+//
+//                    addKeyRequest(fileHash, EPK.key);
+//                    Toast.makeText(this, "Sent Key", Toast.LENGTH_SHORT).show();
+//
+//                } catch (EncryptionException e) {
+//                    Toast.makeText(this, "Encryption Failed", Toast.LENGTH_SHORT).show();
+//                    return;
+//                }
                 //Fallthrough
                 fileAccessInfo.purpose = FileAccessPermision.Purpose.Encrypt_write;
             case Encrypt_write:
@@ -384,6 +398,7 @@ public class HomeActivity extends AppCompatActivity {
                     reqParams.put("jobID", jobId);
                     reqParams.put("fpSecret", fpSecret);
                     reqParams.put("smsSecret", smsSecret);
+                    reqParams.put("doJob", true);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
