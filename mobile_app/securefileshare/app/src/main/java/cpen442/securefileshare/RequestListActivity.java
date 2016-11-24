@@ -32,7 +32,6 @@ public class RequestListActivity extends ListActivity {
     private FingerprintAuthenticationDialogFragment fragment;
     private RequestListAdapter myAdapter;
     private Job jobToRemoveFromList;
-    private TextView text;
     private String jobId;
     private boolean doJob;
 
@@ -46,8 +45,6 @@ public class RequestListActivity extends ListActivity {
         fbReceiver = new FBReceiver();
         registerReceiver(fbReceiver, new IntentFilter(Constants.FB_RECEIVER_INTENT_FILTER));
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-
-        text = (TextView) findViewById(R.id.mainText);
 
         String s = getIntent().getStringExtra(Constants.JOBS_LIST_JSON);
         Gson gson = new Gson();
@@ -99,31 +96,21 @@ public class RequestListActivity extends ListActivity {
                 break;
             }
             case Constants.JOB_GOT_KEY: {
-                // This is where we show them the option to decrypt or not
-                // showOptionsDialog?
+                showDecryptDialog(selectedItem);
                 break;
             }
         }
-        text.setText("You clicked " + selectedItem.getUserID() + " at position " + position);
     }
 
     private void showOptionsDialog(final Job item) {
         final String[] listOfItems = new String[] {"Approve Request", "Decline Request"};
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Select an option")
+        builder.setTitle(R.string.select_option_dialog_title)
                .setItems(listOfItems, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                switch(which) {
-                    case Constants.APPROVE_REQUEST: {
-                        break;
-                        // they approved
-                    }
-                    case Constants.DECLINE_REQUEST: {
-                        doJob = false;
-                        break;
-                        // they denied
-                    }
+                if(which == Constants.DECLINE_REQUEST) {
+                    doJob = false;
                 }
                 respondKeyRequest(item);
                 dialog.dismiss();
@@ -133,8 +120,24 @@ public class RequestListActivity extends ListActivity {
         dialog.show();
     }
 
-    private void showDecryptDialog(Job item) {
-        // Show a dialog asking if they want to decrypt the file or not
+    private void showDecryptDialog(final Job item) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(R.string.got_key_dialog_title)
+               .setNegativeButton(R.string.cancel_button, new DialogInterface.OnClickListener() {
+                   @Override
+                   public void onClick(DialogInterface dialog, int which) {
+                       dialog.dismiss();
+                   }
+               })
+               .setPositiveButton(R.string.ok_button, new DialogInterface.OnClickListener() {
+                   @Override
+                   public void onClick(DialogInterface dialog, int which) {
+                       getKeyRequest(item);
+                       dialog.dismiss();
+                   }
+        });
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
 
     // Authorize the key request
@@ -151,6 +154,22 @@ public class RequestListActivity extends ListActivity {
             }
             jobToRemoveFromList = item;
             makeRequest(this, Constants.RESPOND_KEY_URL, requestParams);
+        }
+    }
+
+    private void getKeyRequest(Job item) {
+        JSONObject requestParams = new JSONObject();
+        String userId = mSharedPreferences.getString(
+                Constants.SHARED_PREF_USER_ID, Constants.INVALID_USER_ID);
+        if(!userId.equals(Constants.INVALID_USER_ID)) {
+            try {
+                requestParams.put("userID", userId);
+                requestParams.put("jobID", item.getJobID());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            jobToRemoveFromList = item;
+            makeRequest(this, Constants.GET_KEY_URL, requestParams);
         }
     }
 
@@ -272,6 +291,10 @@ public class RequestListActivity extends ListActivity {
                     break;
                 }
                 case Constants.JOB_GOT_KEY: {
+                    JSONObject information = resp.getJSONObject("information");
+                    String key = resp.getString("key");
+                    String fileHash = resp.getString("fileHash");
+                    // do decrypt
                     jobToRemoveFromList = null;
                     break;
                 }
