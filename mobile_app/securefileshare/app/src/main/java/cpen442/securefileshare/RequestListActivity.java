@@ -12,30 +12,29 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import javax.crypto.Cipher;
 
-public class ReqListActivity extends ListActivity {
+public class RequestListActivity extends ListActivity {
 
     private SharedPreferences mSharedPreferences;
     private BroadcastReceiver fbReceiver;
     private FingerprintAuthenticationDialogFragment fragment;
+    private RequestListAdapter myAdapter;
+    private Job jobToRemoveFromList;
     private TextView text;
     private String jobId;
+    private boolean doJob;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,7 +53,7 @@ public class ReqListActivity extends ListActivity {
         Gson gson = new Gson();
         Job[] jobs = gson.fromJson(s, Job[].class);
 
-        RequestListAdapter myAdapter = new RequestListAdapter(this, R.layout.activity_req_list_job_item);
+        myAdapter = new RequestListAdapter(this, R.layout.activity_req_list_job_item);
         myAdapter.addAll(jobs);
         setListAdapter(myAdapter);
     }
@@ -89,6 +88,7 @@ public class ReqListActivity extends ListActivity {
         super.onListItemClick(list, view, position, id);
         Job selectedItem = (Job) getListView().getItemAtPosition(position);
         int jobType = selectedItem.getJobType();
+        doJob = true;
         switch(jobType) {
             case Constants.JOB_PENDING_REQUEST: {
                 // These are requests the user is waiting a response for
@@ -107,23 +107,25 @@ public class ReqListActivity extends ListActivity {
         text.setText("You clicked " + selectedItem.getUserID() + " at position " + position);
     }
 
-    private void showOptionsDialog(Job item) {
-        ArrayList<String> array = new ArrayList<>();
-        array.add(Constants.APPROVE_REQUEST);
-        array.add(Constants.DECLINE_REQUEST);
-        final String[] listOfItems = new String[array.size()];
-        array.toArray(listOfItems);
+    private void showOptionsDialog(final Job item) {
+        final String[] listOfItems = new String[] {"Approve Request", "Decline Request"};
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Select an option")
                .setItems(listOfItems, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                String selectedItem = listOfItems[which];
-                if(selectedItem.equals(Constants.APPROVE_REQUEST)) {
-                    // they approved
-                } else if(selectedItem.equals(Constants.DECLINE_REQUEST)) {
-                    // they denied
+                switch(which) {
+                    case Constants.APPROVE_REQUEST: {
+                        break;
+                        // they approved
+                    }
+                    case Constants.DECLINE_REQUEST: {
+                        doJob = false;
+                        break;
+                        // they denied
+                    }
                 }
+                respondKeyRequest(item);
                 dialog.dismiss();
             }
         });
@@ -136,8 +138,20 @@ public class ReqListActivity extends ListActivity {
     }
 
     // Authorize the key request
-    private void authorizeKeyRequest() {
-
+    private void respondKeyRequest(Job item) {
+        JSONObject requestParams = new JSONObject();
+        String userId = mSharedPreferences.getString(
+                Constants.SHARED_PREF_USER_ID, Constants.INVALID_USER_ID);
+        if(!userId.equals(Constants.INVALID_USER_ID)) {
+            try {
+                requestParams.put("userID", userId);
+                requestParams.put("jobID", item.getJobID());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            jobToRemoveFromList = item;
+            makeRequest(this, Constants.RESPOND_KEY_URL, requestParams);
+        }
     }
 
     // Build HTTP request + handle response
@@ -154,10 +168,12 @@ public class ReqListActivity extends ListActivity {
                         startAuthenticate();
                     } else {
                         // Toast response message
+                        jobToRemoveFromList = null;
                         String respMsg = resp.getString("responseMessage");
                         Toast.makeText(mContext, respMsg, Toast.LENGTH_SHORT).show();
                     }
                 } catch (JSONException e) {
+                    jobToRemoveFromList = null;
                     e.printStackTrace();
                 }
             }
@@ -202,7 +218,7 @@ public class ReqListActivity extends ListActivity {
                     reqParams.put("jobID", jobId);
                     reqParams.put("fpSecret", fpSecret);
                     reqParams.put("smsSecret", smsSecret);
-                    reqParams.put("doJob", true); // this is false when we want to delete the job
+                    reqParams.put("doJob", doJob); // this is false when we want to delete the job
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -240,12 +256,23 @@ public class ReqListActivity extends ListActivity {
             Integer jobType = resp.getInt("jobType");
             switch(jobType) {
                 case Constants.JOB_RESPOND_KEY: {
+                    if(jobToRemoveFromList != null) {
+                        myAdapter.remove(jobToRemoveFromList);
+                        myAdapter.notifyDataSetChanged();
+                        jobToRemoveFromList = null;
+                    }
                     break;
                 }
                 case Constants.JOB_DELETE_KEY: {
+                    if(jobToRemoveFromList != null) {
+                        myAdapter.remove(jobToRemoveFromList);
+                        myAdapter.notifyDataSetChanged();
+                        jobToRemoveFromList = null;
+                    }
                     break;
                 }
                 case Constants.JOB_GOT_KEY: {
+                    jobToRemoveFromList = null;
                     break;
                 }
                 default:

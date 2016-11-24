@@ -101,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
             KeyStoreInterface.removeKey();
             System.out.println("Removed key");
         }
-//        Intent intent = new Intent(this, ReqListActivity.class);
+//        Intent intent = new Intent(this, RequestListActivity.class);
 //        String jobsListJson =
 //                "[" +
 //                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"8\", \"contactNumber\":\"1234567890\", \"name\":\"testuser\"}," +

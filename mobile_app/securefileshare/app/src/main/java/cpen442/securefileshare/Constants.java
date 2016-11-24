@@ -7,8 +7,8 @@ public class Constants {
     public static final String JOBS_LIST_JSON = "JOBS_LIST_JSON";
 
     // Request list actions
-    public static final String APPROVE_REQUEST = "Approve Request";
-    public static final String DECLINE_REQUEST = "Decline Request";
+    public static final int APPROVE_REQUEST = 0;
+    public static final int DECLINE_REQUEST = 1;
 
     public static final int FILE_CHOOSER_ENCRYPT = 300;
     public static final int FILE_CHOOSER_DECRYPT = 301;
@@ -39,8 +39,8 @@ public class Constants {
     //URLS
     public static final String ADD_KEY_URL = "https://zb9evmcr90.execute-api.us-west-2.amazonaws.com/Prod/add-key";
     public static final String REQUEST_KEY_URL = "https://zb9evmcr90.execute-api.us-west-2.amazonaws.com/Prod/request-key";
-    public static final String AUTHORIZE_KEY_URL = "test";
-    public static final String GET_KEY_URL = "test";
+    public static final String RESPOND_KEY_URL = "https://zb9evmcr90.execute-api.us-west-2.amazonaws.com/Prod/respond-key";
+    public static final String GET_KEY_URL = "https://zb9evmcr90.execute-api.us-west-2.amazonaws.com/Prod/get-key";
     public static final String GET_JOB_LIST_URL ="https://zb9evmcr90.execute-api.us-west-2.amazonaws.com/Prod/get-jobs";
     public static final String CREATE_ACCOUNT_URL = "https://zb9evmcr90.execute-api.us-west-2.amazonaws.com/Prod/create-account";
     public static final String AUTHENTICATE_URL = "https://zb9evmcr90.execute-api.us-west-2.amazonaws.com/Prod/do-job";

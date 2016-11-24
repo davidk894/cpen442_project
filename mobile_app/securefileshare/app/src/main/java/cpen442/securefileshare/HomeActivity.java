@@ -17,6 +17,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Toast;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -25,7 +26,6 @@ import java.util.HashMap;
 
 import javax.crypto.Cipher;
 
-import cpen442.securefileshare.encryption.EncryptedPlusKey;
 import cpen442.securefileshare.encryption.EncryptionException;
 import cpen442.securefileshare.encryption.FileEncyrption;
 import cpen442.securefileshare.encryption.FileFormat;
@@ -97,19 +97,33 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     public void decryptBtnClick(View v) {
-
+//        JSONObject requestParams = new JSONObject();
+//        String userId = mSharedPreferences.getString(
+//                Constants.SHARED_PREF_USER_ID, Constants.INVALID_USER_ID);
+//        if(!userId.equals(Constants.INVALID_USER_ID)) {
+//            try {
+//                requestParams.put("targetID", userId);
+//                requestParams.put("fileHash", "1234567890");
+//                requestParams.put("userID", userId);
+//            } catch (JSONException e) {
+//                e.printStackTrace();
+//            }
+//            makeRequest(this, Constants.REQUEST_KEY_URL, requestParams);
+//        }
     }
 
     public void reqListBtnClick(View v) {
-        Intent intent = new Intent(this, ReqListActivity.class);
-        String jobsListJson =
-                "[" +
-                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"123456\"}," +
-                    "{\"userID\": \"111111\", \"fileHash\": \"111111\", \"jobID\":111111\", \"jobType\":\"111111\"}" +
-                "]";
-        intent.putExtra(Constants.JOBS_LIST_JSON, jobsListJson);
-        startActivity(intent);
-        // do nothing
+        JSONObject requestParams = new JSONObject();
+        String userId = mSharedPreferences.getString(
+                Constants.SHARED_PREF_USER_ID, Constants.INVALID_USER_ID);
+        if(!userId.equals(Constants.INVALID_USER_ID)) {
+            try {
+                requestParams.put("userID", userId);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            makeRequest(this, Constants.GET_JOB_LIST_URL, requestParams);
+        }
     }
 
     // Permissions
@@ -324,12 +338,6 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-    // Get jobs
-    public void requestList() {
-        JSONObject requestParams = new JSONObject();
-        makeRequest(this, Constants.GET_JOB_LIST_URL, requestParams);
-    }
-
     // File browser for encrypt/decrypt
     public void showFileChooser(int requestCode) {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
@@ -436,12 +444,21 @@ public class HomeActivity extends AppCompatActivity {
             Integer jobType = resp.getInt("jobType");
             switch(jobType) {
                 case Constants.JOB_REQUEST_KEY: {
+                    String responseMessage = resp.getString("responseMessage");
+                    Toast.makeText(this, responseMessage, Toast.LENGTH_SHORT).show();
                     break;
                 }
                 case Constants.JOB_ADD_KEY: {
+                    String responseMessage = resp.getString("responseMessage");
+                    Toast.makeText(this, responseMessage, Toast.LENGTH_SHORT).show();
                     break;
                 }
                 case Constants.JOB_GET_JOBS: {
+                    JSONArray jobList = resp.getJSONArray("information");
+                    String jobListString = jobList.toString();
+                    Intent intent = new Intent(this, RequestListActivity.class);
+                    intent.putExtra(Constants.JOBS_LIST_JSON, jobListString);
+                    startActivity(intent);
                     break;
                 }
                 default:
