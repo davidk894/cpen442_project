@@ -56,27 +56,14 @@ public class RequestListActivity extends ListActivity {
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if(fbReceiver != null) {
-            unregisterReceiver(fbReceiver);
-            fbReceiver = null;
-        }
-    }
-
-    @Override
     protected void onPause() {
         super.onPause();
-        if(fbReceiver != null) {
-            unregisterReceiver(fbReceiver);
-            fbReceiver = null;
-        }
+        unregisterReceiver(fbReceiver);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        fbReceiver = new FBReceiver();
         registerReceiver(fbReceiver, new IntentFilter("FBMessage"));
     }
 
@@ -143,9 +130,8 @@ public class RequestListActivity extends ListActivity {
     // Authorize the key request
     private void respondKeyRequest(Job item) {
         JSONObject requestParams = new JSONObject();
-        String userId = mSharedPreferences.getString(
-                Constants.SHARED_PREF_USER_ID, Constants.INVALID_USER_ID);
-        if(!userId.equals(Constants.INVALID_USER_ID)) {
+        String userId = mSharedPreferences.getString(Constants.SHARED_PREF_USER_ID, null);
+        if(userId != null) {
             try {
                 requestParams.put("userID", userId);
                 requestParams.put("jobID", item.getJobID());
@@ -159,9 +145,8 @@ public class RequestListActivity extends ListActivity {
 
     private void getKeyRequest(Job item) {
         JSONObject requestParams = new JSONObject();
-        String userId = mSharedPreferences.getString(
-                Constants.SHARED_PREF_USER_ID, Constants.INVALID_USER_ID);
-        if(!userId.equals(Constants.INVALID_USER_ID)) {
+        String userId = mSharedPreferences.getString(Constants.SHARED_PREF_USER_ID, null);
+        if(userId != null) {
             try {
                 requestParams.put("userID", userId);
                 requestParams.put("jobID", item.getJobID());
@@ -227,8 +212,8 @@ public class RequestListActivity extends ListActivity {
         fragment = null;
 
         String encryptedFPSecret = mSharedPreferences.getString(
-                Constants.SHARED_PREF_FP_SECRET, Constants.INVALID_FP_SECRET);
-        if(!encryptedFPSecret.equals(Constants.INVALID_FP_SECRET)) {
+                Constants.SHARED_PREF_FP_SECRET, null);
+        if(encryptedFPSecret != null) {
             String fpSecret = KeyStoreInterface.toBase64String(KeyStoreInterface.transform(
                     cryptoObject.getCipher(), KeyStoreInterface.toBytes(encryptedFPSecret)));
             if (withFingerprint) {

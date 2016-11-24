@@ -32,9 +32,7 @@ public class Constants {
 
     // Shared preference
     public static final String SHARED_PREF_USER_ID = "shared_pref.user_id";
-    public static final String INVALID_USER_ID = "Invalid User ID";
     public static final String SHARED_PREF_FP_SECRET = "shared_pref.fp_secret";
-    public static final String INVALID_FP_SECRET = "Invalid FP Secret";
 
     //URLS
     public static final String ADD_KEY_URL = "https://zb9evmcr90.execute-api.us-west-2.amazonaws.com/Prod/add-key";

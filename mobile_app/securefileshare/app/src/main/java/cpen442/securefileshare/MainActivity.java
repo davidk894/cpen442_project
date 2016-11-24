@@ -51,27 +51,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if(fbReceiver != null) {
-            unregisterReceiver(fbReceiver);
-            fbReceiver = null;
-        }
-    }
-
-    @Override
     protected void onPause() {
         super.onPause();
-        if(fbReceiver != null) {
-            unregisterReceiver(fbReceiver);
-            fbReceiver = null;
-        }
+        unregisterReceiver(fbReceiver);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        fbReceiver = new FBReceiver();
         registerReceiver(fbReceiver, new IntentFilter("FBMessage"));
     }
 
@@ -81,10 +68,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void startHomeActivity(View v) {
-        String userId = mSharedPreferences.getString(Constants.SHARED_PREF_USER_ID,
-                Constants.INVALID_USER_ID);
+        String userId = mSharedPreferences.getString(Constants.SHARED_PREF_USER_ID, null);
 
-        if(!userId.equals(Constants.INVALID_USER_ID)) {
+        if(userId != null) {
             Intent enterIntent = new Intent(this, HomeActivity.class);
             startActivity(enterIntent);
         } else {
@@ -96,6 +82,7 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences.Editor editor = mSharedPreferences.edit();
         editor.remove(Constants.SHARED_PREF_USER_ID);
         editor.remove(Constants.SHARED_PREF_FP_SECRET);
+        editor.commit();
         System.out.println("Removed shared prefs");
         if(KeyStoreInterface.keyExists()) {
             KeyStoreInterface.removeKey();

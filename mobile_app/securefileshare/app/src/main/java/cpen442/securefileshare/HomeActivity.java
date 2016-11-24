@@ -54,27 +54,14 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if(fbReceiver != null) {
-            unregisterReceiver(fbReceiver);
-            fbReceiver = null;
-        }
-    }
-
-    @Override
     protected void onPause() {
         super.onPause();
-        if(fbReceiver != null) {
-            unregisterReceiver(fbReceiver);
-            fbReceiver = null;
-        }
+        unregisterReceiver(fbReceiver);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        fbReceiver = new FBReceiver();
         registerReceiver(fbReceiver, new IntentFilter("FBMessage"));
     }
 
@@ -82,9 +69,8 @@ public class HomeActivity extends AppCompatActivity {
     public void encryptBtnClick(View v) {
         showFileChooser(Constants.FILE_CHOOSER_ENCRYPT);
 //        JSONObject requestParams = new JSONObject();
-//        String userId = mSharedPreferences.getString(
-//                Constants.SHARED_PREF_USER_ID, Constants.INVALID_USER_ID);
-//        if(!userId.equals(Constants.INVALID_USER_ID)) {
+//        String userId = mSharedPreferences.getString(Constants.SHARED_PREF_USER_ID, null);
+//        if(userId != null) {
 //            try {
 //                requestParams.put("userID", userId);
 //                requestParams.put("fileHash", "1234567890");
@@ -98,9 +84,8 @@ public class HomeActivity extends AppCompatActivity {
 
     public void decryptBtnClick(View v) {
 //        JSONObject requestParams = new JSONObject();
-//        String userId = mSharedPreferences.getString(
-//                Constants.SHARED_PREF_USER_ID, Constants.INVALID_USER_ID);
-//        if(!userId.equals(Constants.INVALID_USER_ID)) {
+//        String userId = mSharedPreferences.getString(Constants.SHARED_PREF_USER_ID, null);
+//        if(userId != null) {
 //            try {
 //                requestParams.put("targetID", userId);
 //                requestParams.put("fileHash", "1234567890");
@@ -114,9 +99,8 @@ public class HomeActivity extends AppCompatActivity {
 
     public void reqListBtnClick(View v) {
         JSONObject requestParams = new JSONObject();
-        String userId = mSharedPreferences.getString(
-                Constants.SHARED_PREF_USER_ID, Constants.INVALID_USER_ID);
-        if(!userId.equals(Constants.INVALID_USER_ID)) {
+        String userId = mSharedPreferences.getString(Constants.SHARED_PREF_USER_ID, null);
+        if(userId != null) {
             try {
                 requestParams.put("userID", userId);
             } catch (JSONException e) {
@@ -309,9 +293,8 @@ public class HomeActivity extends AppCompatActivity {
     //Adds key
     public void addKeyRequest(byte[] fileHash, byte[] key) {
         JSONObject requestParams = new JSONObject();
-        String userId = mSharedPreferences.getString(
-                Constants.SHARED_PREF_USER_ID, Constants.INVALID_USER_ID);
-        if(!userId.equals(Constants.INVALID_USER_ID)) {
+        String userId = mSharedPreferences.getString(Constants.SHARED_PREF_USER_ID, null);
+        if(userId != null) {
             try {
                 requestParams.put("userID", userId);
                 requestParams.put("fileHash", KeyStoreInterface.toBase64String(fileHash));
@@ -324,9 +307,8 @@ public class HomeActivity extends AppCompatActivity {
     }
     public void requestKey(String targetId, byte[] fileHash){
         JSONObject requestParams = new JSONObject();
-        String userId = mSharedPreferences.getString(
-                Constants.SHARED_PREF_USER_ID, Constants.INVALID_USER_ID);
-        if(!userId.equals(Constants.INVALID_USER_ID)) {
+        String userId = mSharedPreferences.getString(Constants.SHARED_PREF_USER_ID, null);
+        if(userId != null) {
             try {
                 requestParams.put("userID", userId);
                 requestParams.put("targetID", targetId);
@@ -396,8 +378,8 @@ public class HomeActivity extends AppCompatActivity {
         fragment = null;
 
         String encryptedFPSecret = mSharedPreferences.getString(
-                Constants.SHARED_PREF_FP_SECRET, Constants.INVALID_FP_SECRET);
-        if(!encryptedFPSecret.equals(Constants.INVALID_FP_SECRET)) {
+                Constants.SHARED_PREF_FP_SECRET, null);
+        if(encryptedFPSecret != null) {
             String fpSecret = KeyStoreInterface.toBase64String(KeyStoreInterface.transform(
                     cryptoObject.getCipher(), KeyStoreInterface.toBytes(encryptedFPSecret)));
             if (withFingerprint) {
