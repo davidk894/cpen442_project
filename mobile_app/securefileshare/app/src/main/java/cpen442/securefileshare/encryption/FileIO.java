@@ -11,6 +11,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Created by Cyberus on 2016-11-07.
@@ -19,10 +20,6 @@ import java.io.IOException;
 public class FileIO {
 
     public static byte[] ReadAllBytes(String filePath) throws IOException {
-
-        Uri uri = new Uri.Builder().path(filePath).build();
-
-
         File file = new File(filePath);
         byte[] fileData = new byte[(int) file.length()];
         DataInputStream dis = new DataInputStream(new FileInputStream(file));
