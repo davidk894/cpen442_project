@@ -11,36 +11,43 @@
     tools:context="cpen442.securefileshare.MainActivity">
 
     <Button
-        android:text="Create Account"
-        android:layout_width="wrap_content"
+        android:text="Decrypt"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/btn_createacc"
+        android:id="@+id/btn_decrypt"
         android:layout_centerVertical="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:onClick="onCreateBtnClick" />
+        android:onClick="decryptBtnClick" />
 
     <Button
-        android:text="Enter"
-        android:layout_width="wrap_content"
+        android:text="Request List"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/btn_enter"
-        android:layout_above="@+id/btn_createacc"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
+        android:id="@+id/btn_viewlist"
+        android:layout_alignTop="@+id/btn_decrypt"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:onClick="startHomeActivity" />
+        android:layout_marginTop="45dp"
+        android:onClick="reqListBtnClick" />
+
+    <Button
+        android:text="Encrypt"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/btn_encrypt"
+        android:layout_above="@+id/btn_decrypt"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:onClick="encryptBtnClick" />
 
     <Button
         android:text="testbutton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/btn_createacc"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="35dp"
+        android:layout_marginTop="32dp"
         android:id="@+id/testbutton"
-        android:onClick="testFunction"/>
+        android:onClick="testFunction"
+        android:layout_below="@+id/btn_viewlist"
+        android:layout_centerHorizontal="true" />
 </RelativeLayout>

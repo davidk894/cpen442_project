@@ -31,5 +31,11 @@
     <string name="fingerprint_description">Confirm fingerprint to continue</string>
     <string name="fingerprint_not_recognized">Fingerprint not recognized. Try again</string>
     <string name="fingerprint_success">Fingerprint recognized</string>
+    <string name="title_activity_create_account">Welcome!</string>
+
+    <!-- Account creation strings -->
+    <string name="first_time_msg">This is your first time using this application</string>
+    <string name="prompt_name">Please enter your name</string>
+    <string name="hint_name">Name</string>
 
 </resources>

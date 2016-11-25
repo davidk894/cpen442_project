@@ -2,52 +2,59 @@ package cpen442.securefileshare;
 
 import android.Manifest;
 import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.preference.PreferenceManager;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.content.PermissionChecker;
-import android.support.v7.app.AppCompatActivity;
+import android.net.Uri;
 import android.os.Bundle;
-import android.telephony.TelephonyManager;
+import android.preference.PreferenceManager;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Toast;
 
-import com.google.firebase.iid.FirebaseInstanceId;
-
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
+import java.util.HashMap;
 
 import javax.crypto.Cipher;
 
+import cpen442.securefileshare.encryption.EncryptionException;
+import cpen442.securefileshare.encryption.FileEncyrption;
+import cpen442.securefileshare.encryption.FileFormat;
+import cpen442.securefileshare.encryption.FormatException;
+import cpen442.securefileshare.encryption.FileIO;
+import cpen442.securefileshare.encryption.HashByteWrapper;
 
 public class MainActivity extends AppCompatActivity
         implements RequestAndAuthenticationService.IAuthenticatable {
 
     private SharedPreferences mSharedPreferences;
     private BroadcastReceiver fbReceiver;
-    private String fpSecret;
-
+    private static final String ENCRYPTED_FILE_EXTENTION = ".crypt";
+    private HashMap<Integer,Object> permissionMap = new HashMap<Integer, Object>();
+    private int PermissionNumber = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         fbReceiver = new FBReceiver();
         registerReceiver(fbReceiver, new IntentFilter(Constants.FB_RECEIVER_INTENT_FILTER));
-        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        unregisterReceiver(fbReceiver);
+        if(fbReceiver != null) {
+            unregisterReceiver(fbReceiver);
+        }
     }
 
     @Override
@@ -57,18 +64,59 @@ public class MainActivity extends AppCompatActivity
     }
 
     // Button click listeners
-    public void onCreateBtnClick(View v) {
-        createAccount();
+    public void encryptBtnClick(View v) {
+        showFileChooser(Constants.FILE_CHOOSER_ENCRYPT);
+//        JSONObject requestParams = new JSONObject();
+//        String userId = mSharedPreferences.getString(Constants.SHARED_PREF_USER_ID, null);
+//        if(userId != null) {
+//            try {
+//                requestParams.put("userID", userId);
+//                requestParams.put("fileHash", "1234567890");
+//                requestParams.put("key", "1234567890");
+//            } catch (JSONException e) {
+//                e.printStackTrace();
+//            }
+//            RequestAndAuthenticationService service = RequestAndAuthenticationService.getInstance();
+//            service.setDoJob(true);
+//            service.setSharedPreferences(mSharedPreferences);
+//            service.setCipherMode(Cipher.DECRYPT_MODE);
+//            service.makeRequest(this, Constants.ADD_KEY_URL, requestParams);
+//        }
     }
 
-    public void startHomeActivity(View v) {
-        String userId = mSharedPreferences.getString(Constants.SHARED_PREF_USER_ID, null);
+    public void decryptBtnClick(View v) {
+//        JSONObject requestParams = new JSONObject();
+//        String userId = mSharedPreferences.getString(Constants.SHARED_PREF_USER_ID, null);
+//        if(userId != null) {
+//            try {
+//                requestParams.put("targetID", userId);
+//                requestParams.put("fileHash", "1234567890");
+//                requestParams.put("userID", userId);
+//            } catch (JSONException e) {
+//                e.printStackTrace();
+//            }
+//            RequestAndAuthenticationService service = RequestAndAuthenticationService.getInstance();
+//            service.setDoJob(true);
+//            service.setSharedPreferences(mSharedPreferences);
+//            service.setCipherMode(Cipher.DECRYPT_MODE);
+//            service.makeRequest(this, Constants.REQUEST_KEY_URL, requestParams);
+//        }
+    }
 
+    public void reqListBtnClick(View v) {
+        JSONObject requestParams = new JSONObject();
+        String userId = mSharedPreferences.getString(Constants.SHARED_PREF_USER_ID, null);
         if(userId != null) {
-            Intent enterIntent = new Intent(this, HomeActivity.class);
-            startActivity(enterIntent);
-        } else {
-            Toast.makeText(this, getString(R.string.no_existing_account), Toast.LENGTH_SHORT).show();
+            try {
+                requestParams.put("userID", userId);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            RequestAndAuthenticationService service = RequestAndAuthenticationService.getInstance();
+            service.setDoJob(true);
+            service.setSharedPreferences(mSharedPreferences);
+            service.setCipherMode(Cipher.DECRYPT_MODE);
+            service.makeRequest(this, Constants.GET_JOB_LIST_URL, requestParams);
         }
     }
 
@@ -102,85 +150,281 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case Constants.PERMISSION_READ_PHONE_STATE: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // Permission granted
-                    this.createAccount();
-                } else {
-                    // Don't do anything then..
+        if(grantResults.length == permissions.length) {
+            int i;
+            switch (i = permissions.length) {
+                case 1: {
+                    switch (permissions[i]) {
+                        case Manifest.permission.READ_PHONE_STATE: {
+                            if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+
+                            } else {
+
+                            }
+                            break;
+                        }
+                        case Manifest.permission.READ_SMS: {
+                            if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+
+                            } else {
+
+                            }
+                            break;
+                        }
+                        case Manifest.permission.READ_EXTERNAL_STORAGE: {
+                            if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                                handleFileAccessPermissionResult((FileAccessPermision) permissionMap.get(requestCode));
+                            } else {
+
+                            }
+                            break;
+                        }
+                        case Manifest.permission.WRITE_EXTERNAL_STORAGE: {
+                            if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                                handleFileAccessPermissionResult((FileAccessPermision) permissionMap.get(requestCode));
+                            } else {
+
+                            }
+                            break;
+                        }
+                        default: {
+
+                        }
+                    }
                 }
-                break;
-            }
-            case Constants.PERMISSION_READ_SMS: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // Permission granted
-                } else {
-                    // Don't do anything then..
+                case 2: {
+                    boolean allGranted = true;
+                    for (int g : grantResults) {
+                        if (g != PackageManager.PERMISSION_GRANTED) {
+                            allGranted = false;
+                        }
+                    }
+                    if (allGranted){
+                        boolean isFileAccess = true;
+                        for (String p : permissions){
+                            if (p != Manifest.permission.WRITE_EXTERNAL_STORAGE
+                                    || p != Manifest.permission.READ_EXTERNAL_STORAGE) {
+                                isFileAccess = false;
+                            }
+                        }
+                        if (isFileAccess) {
+                            handleFileAccessPermissionResult((FileAccessPermision) permissionMap.get(requestCode));
+                        }
+                    }
+
                 }
-                break;
+                default: {
+                    // do nothing
+                }
             }
         }
-        return;
+        permissionMap.remove(requestCode);
     }
 
+    private void handleFileAccessPermissionResult(FileAccessPermision fileAccessInfo) {
+        switch (fileAccessInfo.purpose) {
+            case Encrypt_read:
+                if (!readFile(fileAccessInfo)) {
+                    return;
+                }
+//                try {
+//                    EncryptedPlusKey EPK = FileEncyrption.EncryptFile(fileAccessInfo.filePath, fileAccessInfo.fileData);
+//                    fileAccessInfo.fileData = EPK.encryptedFile;
+//
+//                    Toast.makeText(this, "Encrypted", Toast.LENGTH_SHORT).show();
+//                    byte[] fileHash = HashByteWrapper.computeHash(EPK.encryptedFile);
+//
+//                    addKeyRequest(fileHash, EPK.key);
+//                    Toast.makeText(this, "Sent Key", Toast.LENGTH_SHORT).show();
+//
+//                } catch (EncryptionException e) {
+//                    Toast.makeText(this, "Encryption Failed", Toast.LENGTH_SHORT).show();
+//                    return;
+//                }
+                //Fallthrough
+                fileAccessInfo.purpose = FileAccessPermision.Purpose.Encrypt_write;
+            case Encrypt_write:
+                if (!writeToFile(fileAccessInfo)) {
+                    return;
+                }
+                break;
+            case Decrypt_read:
+                if (!readFile(fileAccessInfo)) {
+                    return;
+                }
+                fileAccessInfo.purpose = FileAccessPermision.Purpose.toDecrypt_write;
+            case toDecrypt_write:
+                if (!writeToFile(fileAccessInfo)) {
+                    return;
+                }
+                byte[] fileHash = HashByteWrapper.computeHash(fileAccessInfo.fileData);
+                requestKey(fileAccessInfo.targetID, fileHash);
+                break;
+            case toDecrypt_read:
+                if (!readFile(fileAccessInfo)) {
+                    return;
+                }
+                try {
+                    FileFormat ff = FileEncyrption.DecryptFile(fileAccessInfo.filePath,
+                            fileAccessInfo.key);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (EncryptionException e) {
+                    Toast.makeText(this, "Decryption Failed", Toast.LENGTH_SHORT).show();
+                    return;
+                } catch (FormatException e) {
+                    Toast.makeText(this, "File Format Exception", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                fileAccessInfo.purpose = FileAccessPermision.Purpose.Decrypt_write;
+            case Decrypt_write:
+                writeToFile(fileAccessInfo);
+                break;
+            default:
+                Toast.makeText(this, "Shouldn't be here", Toast.LENGTH_SHORT).show();
+        }
+    }
 
-    // Create account
-    public void createAccount() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE)
-                != PermissionChecker.PERMISSION_GRANTED) {
-            // Request permissions
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.READ_PHONE_STATE},
-                    Constants.PERMISSION_READ_PHONE_STATE);
-        } else {
-            // Already have permissions
-            JSONObject reqParams = new JSONObject();
-            TelephonyManager mgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-            fpSecret = KeyStoreInterface.generateCryptoMessage();
-            String phoneNumber = "+" + mgr.getLine1Number();
-            String fcmToken = FirebaseInstanceId.getInstance().getToken();
+    private boolean readFile(FileAccessPermision fInfo){
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            permissionMap.put(PermissionNumber, fInfo);
+            requestPermissions(new String[]{
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+            }, PermissionNumber);
+            PermissionNumber++;
+            return false;
+        }
+        try {
+            fInfo.fileData = FileIO.ReadAllBytes(fInfo.filePath);
+            return true;
+        } catch (IOException e) {
+            Toast.makeText(this, "Error reading file", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+    }
+
+    private boolean writeToFile(FileAccessPermision fInfo){
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            permissionMap.put(PermissionNumber, fInfo);
+            requestPermissions(new String[]{
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+            }, PermissionNumber);
+            PermissionNumber++;
+            return false;
+        }
+        try {
+            FileIO.WriteAllBytes(fInfo.filePath, fInfo.fileData);
+        } catch (IOException e) {
+            Toast.makeText(this, "Error writing to file", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        return true;
+    }
+
+    //Adds key
+    public void addKeyRequest(byte[] fileHash, byte[] key) {
+        JSONObject requestParams = new JSONObject();
+        String userId = mSharedPreferences.getString(Constants.SHARED_PREF_USER_ID, null);
+        if(userId != null) {
             try {
-                reqParams.put("firebaseID", fcmToken);
-                reqParams.put("name", "TestUser");
-                reqParams.put("fpSecret", fpSecret);
-                reqParams.put("contactNumber", phoneNumber);
+                requestParams.put("userID", userId);
+                requestParams.put("fileHash", KeyStoreInterface.toBase64String(fileHash));
+                requestParams.put("key", KeyStoreInterface.toBase64String(key));
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            createAccountRequest(reqParams);
+            RequestAndAuthenticationService service = RequestAndAuthenticationService.getInstance();
+            service.setDoJob(true);
+            service.setSharedPreferences(mSharedPreferences);
+            service.setCipherMode(Cipher.DECRYPT_MODE);
+            service.makeRequest(this, Constants.ADD_KEY_URL, requestParams);
+        }
+    }
+    public void requestKey(String targetId, byte[] fileHash){
+        JSONObject requestParams = new JSONObject();
+        String userId = mSharedPreferences.getString(Constants.SHARED_PREF_USER_ID, null);
+        if(userId != null) {
+            try {
+                requestParams.put("userID", userId);
+                requestParams.put("targetID", targetId);
+                requestParams.put("fileHash", KeyStoreInterface.toBase64String(fileHash));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            RequestAndAuthenticationService service = RequestAndAuthenticationService.getInstance();
+            service.setDoJob(true);
+            service.setSharedPreferences(mSharedPreferences);
+            service.setCipherMode(Cipher.DECRYPT_MODE);
+            service.makeRequest(this, Constants.REQUEST_KEY_URL, requestParams);
         }
     }
 
-    public void createAccountRequest(JSONObject requestParams) {
-        RequestAndAuthenticationService service = RequestAndAuthenticationService.getInstance();
+    // File browser for encrypt/decrypt
+    public void showFileChooser(int requestCode) {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.setType("*/*");      //all files
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
 
-        service.setCipherMode(Cipher.ENCRYPT_MODE);
-        service.setDoJob(true);
-        service.setFpSecret(fpSecret);
-        service.setSharedPreferences(mSharedPreferences);
-        service.makeRequest(this, Constants.CREATE_ACCOUNT_URL, requestParams);
+        try {
+            startActivityForResult(Intent.createChooser(intent, "Select a File to Upload"), requestCode);
+        } catch (android.content.ActivityNotFoundException ex) {
+            // Potentially direct the user to the Market with a Dialog
+            Toast.makeText(this, "Please install a File Manager.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
-    public void processAuthenticateResponse(JSONObject response) {
-        RequestAndAuthenticationService service = RequestAndAuthenticationService.getInstance();
-        fpSecret = service.getFpSecret(); // This should return encrypted fp secret
-        service.setFpSecret(null);
-        service.setSharedPreferences(null);
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == RESULT_OK) {
+            Uri fileUri = data.getData();
+            String filePath = fileUri.toString();
+            if (requestCode == Constants.FILE_CHOOSER_ENCRYPT) {
+                //request p
+                FileAccessPermision fInfo = new FileAccessPermision();
+                fInfo.purpose = FileAccessPermision.Purpose.Encrypt_read;
+                fInfo.filePath = filePath;
+                handleFileAccessPermissionResult(fInfo);
+            } else if (requestCode == Constants.FILE_CHOOSER_DECRYPT) {
+                FileAccessPermision fInfo = new FileAccessPermision();
+                fInfo.purpose = FileAccessPermision.Purpose.Decrypt_read;
+                fInfo.filePath = filePath;
+                handleFileAccessPermissionResult(fInfo);
+            }
+        }
+    }
+
+    @Override
+    public void processAuthenticateResponse(JSONObject resp) {
         try {
-            String userId = response.getString("information");
-            SharedPreferences.Editor editor = mSharedPreferences.edit();
-            editor.putString(Constants.SHARED_PREF_USER_ID, userId);
-            editor.putString(Constants.SHARED_PREF_FP_SECRET, fpSecret);
-            editor.commit();
-            fpSecret = null;
+            Integer jobType = resp.getInt("jobType");
+            switch(jobType) {
+                case Constants.JOB_REQUEST_KEY: {
+                    String responseMessage = resp.getString("responseMessage");
+                    Toast.makeText(this, responseMessage, Toast.LENGTH_SHORT).show();
+                    break;
+                }
+                case Constants.JOB_ADD_KEY: {
+                    String responseMessage = resp.getString("responseMessage");
+                    Toast.makeText(this, responseMessage, Toast.LENGTH_SHORT).show();
+                    break;
+                }
+                case Constants.JOB_GET_JOBS: {
+                    JSONArray jobList = resp.getJSONArray("information");
+                    String jobListString = jobList.toString();
+                    Intent intent = new Intent(this, RequestListActivity.class);
+                    intent.putExtra(Constants.JOBS_LIST_JSON, jobListString);
+                    startActivity(intent);
+                    break;
+                }
+            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
+
 }
