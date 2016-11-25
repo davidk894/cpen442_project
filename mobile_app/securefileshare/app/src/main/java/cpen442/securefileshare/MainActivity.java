@@ -246,7 +246,7 @@ public class MainActivity extends AppCompatActivity
                 }
 
                 byte [] fileHash = HashByteWrapper.computeHash(fileAccessInfo.fileData);
-                String newFileName = Utility.toBase64String(fileHash) + ENCRYPTED_FILE_EXTENTION;
+                String newFileName = Utility.toBase64String(fileHash).replace('/', '-') + ENCRYPTED_FILE_EXTENTION;
                 try {
                     fileAccessInfo.targetID = new EncryptedFileFormat(fileAccessInfo.fileData).getUserId();
                 } catch (FormatException e) {
