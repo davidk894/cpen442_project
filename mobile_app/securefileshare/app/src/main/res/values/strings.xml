@@ -2,6 +2,21 @@
     <string name="app_name">Secure File Share</string>
     <string name="no_existing_account">Please create an account first</string>
 
+    <!-- Request List -->
+    <string name="pending_request_name_label">Requested from:</string>
+    <string name="pending_response_name_label">Requester:</string>
+    <string name="contact_number_label">Contact Number:</string>
+    <string name="file_hash_label">File Hash:</string>
+    <string name="status_label">Status:</string>
+    <string name="pending_request">Waiting for authorization</string>
+    <string name="pending_response">Waiting for your response</string>
+    <string name="got_key">Access authorized!</string>
+
+    <!-- Request List Dialogs -->
+    <string name="select_option_dialog_title">Select an option</string>
+    <string name="got_key_dialog_title">Decrypt File with Key?</string>
+    <string name="ok_button">OK</string>
+
     <!-- Authentication dialog -->
     <string name="cancel_button">Cancel</string>
     <string name="next_button">Next</string>

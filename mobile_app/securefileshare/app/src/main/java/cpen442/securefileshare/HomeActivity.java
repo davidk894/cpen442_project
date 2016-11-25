@@ -18,6 +18,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Toast;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -37,7 +38,8 @@ import cpen442.securefileshare.encryption.FileIO;
 import cpen442.securefileshare.encryption.HashByteWrapper;
 import cpen442.securefileshare.encryption.Utility;
 
-public class HomeActivity extends AppCompatActivity {
+public class HomeActivity extends AppCompatActivity
+        implements RequestAndAuthenticationService.IAuthenticatable {
 
     private SharedPreferences mSharedPreferences;
     private BroadcastReceiver fbReceiver;
@@ -64,46 +66,55 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if(fbReceiver != null) {
-            unregisterReceiver(fbReceiver);
-        }
-    }
-
-    @Override
     protected void onPause() {
         super.onPause();
-        if(fbReceiver != null) {
-            unregisterReceiver(fbReceiver);
-        }
+        unregisterReceiver(fbReceiver);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if(fbReceiver != null) {
-            registerReceiver(fbReceiver, new IntentFilter("FBMessage"));
-        }
+        registerReceiver(fbReceiver, new IntentFilter("FBMessage"));
     }
 
     // Button click listeners
     public void encryptBtnClick(View v) {
         showFileChooser(Constants.FILE_CHOOSER_ENCRYPT);
+//        JSONObject requestParams = new JSONObject();
+//        String userId = mSharedPreferences.getString(Constants.SHARED_PREF_USER_ID, null);
+//        if(userId != null) {
+//            try {
+//                requestParams.put("userID", userId);
+//                requestParams.put("fileHash", "1234567890");
+//                requestParams.put("key", "1234567890");
+//            } catch (JSONException e) {
+//                e.printStackTrace();
+//            }
+//            RequestAndAuthenticationService service = RequestAndAuthenticationService.getInstance();
+//            service.setDoJob(true);
+//            service.setSharedPreferences(mSharedPreferences);
+//            service.setCipherMode(Cipher.DECRYPT_MODE);
+//            service.makeRequest(this, Constants.ADD_KEY_URL, requestParams);
+//        }
     }
-
     public void decryptBtnClick(View v) { showFileChooser(Constants.FILE_CHOOSER_DECRYPT); }
 
+
     public void reqListBtnClick(View v) {
-        Intent intent = new Intent(this, ReqListActivity.class);
-        String jobsListJson =
-                "[" +
-                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"123456\"}," +
-                    "{\"userID\": \"111111\", \"fileHash\": \"111111\", \"jobID\":111111\", \"jobType\":\"111111\"}" +
-                "]";
-        intent.putExtra(Constants.JOBS_LIST_JSON, jobsListJson);
-        startActivity(intent);
-        // do nothing
+        JSONObject requestParams = new JSONObject();
+        String userId = mSharedPreferences.getString(Constants.SHARED_PREF_USER_ID, null);
+        if(userId != null) {
+            try {
+                requestParams.put("userID", userId);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            RequestAndAuthenticationService service = RequestAndAuthenticationService.getInstance();
+            service.setDoJob(true);
+            service.setSharedPreferences(mSharedPreferences);
+            service.setCipherMode(Cipher.DECRYPT_MODE);
+            service.makeRequest(this, Constants.GET_JOB_LIST_URL, requestParams);
+        }
     }
 
     // Permissions
@@ -189,8 +200,8 @@ public class HomeActivity extends AppCompatActivity {
                 }
                 try {
                     String userId = mSharedPreferences.getString(
-                            Constants.SHARED_PREF_USER_ID, Constants.INVALID_USER_ID);
-                    if (userId.equals(Constants.INVALID_USER_ID)){
+                            Constants.SHARED_PREF_USER_ID, null);
+                    if (userId == null){
                         Toast.makeText(this, "Invalid User ID", Toast.LENGTH_SHORT).show();
                         return;
                     }
@@ -322,9 +333,8 @@ public class HomeActivity extends AppCompatActivity {
     //Adds key
     public void addKeyRequest(byte[] fileHash, byte[] key) {
         JSONObject requestParams = new JSONObject();
-        String userId = mSharedPreferences.getString(
-                Constants.SHARED_PREF_USER_ID, Constants.INVALID_USER_ID);
-        if(!userId.equals(Constants.INVALID_USER_ID)) {
+        String userId = mSharedPreferences.getString(Constants.SHARED_PREF_USER_ID, null);
+        if(userId != null) {
             try {
                 requestParams.put("userID", userId);
                 requestParams.put("fileHash", Utility.toBase64String(fileHash));
@@ -332,14 +342,17 @@ public class HomeActivity extends AppCompatActivity {
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            makeRequest(this, Constants.ADD_KEY_URL, requestParams);
+            RequestAndAuthenticationService service = RequestAndAuthenticationService.getInstance();
+            service.setDoJob(true);
+            service.setSharedPreferences(mSharedPreferences);
+            service.setCipherMode(Cipher.DECRYPT_MODE);
+            service.makeRequest(this, Constants.ADD_KEY_URL, requestParams);
         }
     }
     public void requestKey(String targetId, byte[] fileHash){
         JSONObject requestParams = new JSONObject();
-        String userId = mSharedPreferences.getString(
-                Constants.SHARED_PREF_USER_ID, Constants.INVALID_USER_ID);
-        if(!userId.equals(Constants.INVALID_USER_ID)) {
+        String userId = mSharedPreferences.getString(Constants.SHARED_PREF_USER_ID, null);
+        if(userId != null) {
             try {
                 requestParams.put("userID", userId);
                 requestParams.put("targetID", targetId);
@@ -347,14 +360,12 @@ public class HomeActivity extends AppCompatActivity {
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            makeRequest(this, Constants.REQUEST_KEY_URL, requestParams);
+            RequestAndAuthenticationService service = RequestAndAuthenticationService.getInstance();
+            service.setDoJob(true);
+            service.setSharedPreferences(mSharedPreferences);
+            service.setCipherMode(Cipher.DECRYPT_MODE);
+            service.makeRequest(this, Constants.REQUEST_KEY_URL, requestParams);
         }
-    }
-
-    // Get jobs
-    public void requestList() {
-        JSONObject requestParams = new JSONObject();
-        makeRequest(this, Constants.GET_JOB_LIST_URL, requestParams);
     }
 
     // File browser for encrypt/decrypt
@@ -415,8 +426,8 @@ public class HomeActivity extends AppCompatActivity {
         fragment = null;
 
         String encryptedFPSecret = mSharedPreferences.getString(
-                Constants.SHARED_PREF_FP_SECRET, Constants.INVALID_FP_SECRET);
-        if(!encryptedFPSecret.equals(Constants.INVALID_FP_SECRET)) {
+                Constants.SHARED_PREF_FP_SECRET, null);
+        if(encryptedFPSecret != null) {
             String fpSecret = Utility.toBase64String(KeyStoreInterface.transform(
                     cryptoObject.getCipher(), Utility.toBytes(encryptedFPSecret)));
             if (withFingerprint) {
@@ -456,51 +467,32 @@ public class HomeActivity extends AppCompatActivity {
         request.setJSONString(requestParams.toString());
         request.execute();
     }
-
-    private void processAuthenticateResponse(JSONObject resp) {
+    @Override
+    public void processAuthenticateResponse(JSONObject resp) {
         try {
             Integer jobType = resp.getInt("jobType");
             switch(jobType) {
                 case Constants.JOB_REQUEST_KEY: {
+                    String responseMessage = resp.getString("responseMessage");
+                    Toast.makeText(this, responseMessage, Toast.LENGTH_SHORT).show();
                     break;
                 }
                 case Constants.JOB_ADD_KEY: {
+                    String responseMessage = resp.getString("responseMessage");
+                    Toast.makeText(this, responseMessage, Toast.LENGTH_SHORT).show();
                     break;
                 }
                 case Constants.JOB_GET_JOBS: {
+                    JSONArray jobList = resp.getJSONArray("information");
+                    String jobListString = jobList.toString();
+                    Intent intent = new Intent(this, RequestListActivity.class);
+                    intent.putExtra(Constants.JOBS_LIST_JSON, jobListString);
+                    startActivity(intent);
                     break;
                 }
-                default:
-                    //do nothing;
             }
         } catch (JSONException e) {
             e.printStackTrace();
         }
-    }
-
-    // Build HTTP request + handle response
-    public void makeRequest(final Context mContext, String requestURL, JSONObject requestParams) {
-        HttpRequestUtility request = new HttpRequestUtility(new HttpRequestUtility.HttpResponseUtility() {
-            @Override
-            public void processResponse(String response) {
-                try {
-                    JSONObject resp = new JSONObject(response);
-                    if(resp.getBoolean("success")) {
-                        jobId = resp.getString("jobID");
-                        startAuthenticate();
-                    } else {
-                        // Toast response message
-                        String respMsg = resp.getString("responseMessage");
-                        Toast.makeText(mContext, respMsg, Toast.LENGTH_SHORT).show();
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        request.setRequestType(HttpRequestUtility.POST_METHOD);
-        request.setRequestURL(requestURL);
-        request.setJSONString(requestParams.toString());
-        request.execute();
     }
 }

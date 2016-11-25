@@ -29,12 +29,36 @@ public class RequestListAdapter extends ArrayAdapter<Job> {
                 v = convertView;
             }
 
-            TextView userIdItem = (TextView) v.findViewById(R.id.list_item_user_id);
-            TextView fileHashItem = (TextView) v.findViewById(R.id.list_item_file_hash);
+            TextView statusItem = (TextView) v.findViewById(R.id.list_item_status_field);
+            TextView userNameLabel = (TextView) v.findViewById(R.id.list_item_user_name_label);
+            TextView userNameField = (TextView) v.findViewById(R.id.list_item_user_name_field);
+            TextView contactNumberField = (TextView) v.findViewById(R.id.list_item_contact_number_field);
+            TextView fileHashItem = (TextView) v.findViewById(R.id.list_item_file_hash_field);
 
-            userIdItem.setText(item.getUserID());
+            userNameField.setText(item.getName());
+            contactNumberField.setText(item.getContactNumber());
             fileHashItem.setText(item.getFileHash());
-            // Add text components here by using v.findViewBy(blah).
+
+            switch(item.getJobType()) {
+                case Constants.JOB_PENDING_REQUEST: {
+                    userNameLabel.setText(R.string.pending_request_name_label);
+                    String text = getContext().getString(R.string.pending_request);
+                    statusItem.setText(text);
+                    break;
+                }
+                case Constants.JOB_PENDING_RESPONSE: {
+                    userNameLabel.setText(R.string.pending_response_name_label);
+                    String text = getContext().getString(R.string.pending_response);
+                    statusItem.setText(text);
+                    break;
+                }
+                case Constants.JOB_GOT_KEY: {
+                    userNameLabel.setText(R.string.pending_request_name_label);
+                    String text = getContext().getString(R.string.got_key);
+                    statusItem.setText(text);
+                    break;
+                }
+            }
             return v;
         } catch (Exception e) {
             e.printStackTrace();

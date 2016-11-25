@@ -9,25 +9,18 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context=".MainActivity" >
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/mainText"
-        android:text="My list" />
-
     <ListView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/mainText"
         android:id="@android:id/list"
         android:background="#aaaaaa" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/mainText"
+        android:layout_centerHorizontal="true"
         android:id="@android:id/empty"
-        android:text="There is no data"
+        android:text="You have no requests"
         android:textStyle="bold" />
 
 </RelativeLayout>

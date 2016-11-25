@@ -43,7 +43,7 @@
             </intent-filter>
         </service>
 
-        <activity android:name=".ReqListActivity"></activity>
+        <activity android:name=".RequestListActivity"></activity>
     </application>
 
 </manifest>
