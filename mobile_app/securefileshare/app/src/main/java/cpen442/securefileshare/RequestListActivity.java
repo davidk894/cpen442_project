@@ -5,6 +5,7 @@ import android.app.ListActivity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.hardware.fingerprint.FingerprintManager;
@@ -16,9 +17,14 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.crypto.Cipher;
 
@@ -30,6 +36,7 @@ public class RequestListActivity extends ListActivity
     private RequestListAdapter myAdapter;
     private Job jobToRemoveFromList;
     private boolean doJob;
+    private ArrayList<Job> jobsList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +52,7 @@ public class RequestListActivity extends ListActivity
         String s = getIntent().getStringExtra(Constants.JOBS_LIST_JSON);
         Gson gson = new Gson();
         Job[] jobs = gson.fromJson(s, Job[].class);
+        jobsList = new ArrayList<>(Arrays.asList(jobs));
 
         myAdapter = new RequestListAdapter(this, R.layout.activity_req_list_job_item);
         myAdapter.addAll(jobs);
@@ -61,6 +69,17 @@ public class RequestListActivity extends ListActivity
     protected void onResume() {
         super.onResume();
         registerReceiver(fbReceiver, new IntentFilter("FBMessage"));
+    }
+
+    @Override
+    public void onBackPressed() {
+        Gson gson = new Gson();
+        String jsonString = gson.toJson(jobsList,
+                new TypeToken<ArrayList<Job>>() {}.getType());
+        Intent intent = new Intent();
+        intent.putExtra(Constants.JOBS_LIST_JSON, jsonString);
+        setResult(RESULT_OK, intent);
+        super.onBackPressed();
     }
 
     @Override
@@ -82,6 +101,23 @@ public class RequestListActivity extends ListActivity
                 showDecryptDialog(selectedItem);
                 break;
             }
+        }
+    }
+
+    public void refreshListBtnClick(View v) {
+        JSONObject requestParams = new JSONObject();
+        String userId = mSharedPreferences.getString(Constants.SHARED_PREF_USER_ID, null);
+        if(userId != null) {
+            try {
+                requestParams.put("userID", userId);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            RequestAndAuthenticationService service = RequestAndAuthenticationService.getInstance();
+            service.setDoJob(true);
+            service.setSharedPreferences(mSharedPreferences);
+            service.setCipherMode(Cipher.DECRYPT_MODE);
+            service.makeRequest(this, Constants.GET_JOB_LIST_URL, requestParams);
         }
     }
 
@@ -173,6 +209,7 @@ public class RequestListActivity extends ListActivity
             switch(jobType) {
                 case Constants.JOB_RESPOND_KEY: {
                     if(jobToRemoveFromList != null) {
+                        jobsList.remove(jobToRemoveFromList);
                         myAdapter.remove(jobToRemoveFromList);
                         myAdapter.notifyDataSetChanged();
                         jobToRemoveFromList = null;
@@ -181,6 +218,7 @@ public class RequestListActivity extends ListActivity
                 }
                 case Constants.JOB_DELETE_KEY: {
                     if(jobToRemoveFromList != null) {
+                        jobsList.remove(jobToRemoveFromList);
                         myAdapter.remove(jobToRemoveFromList);
                         myAdapter.notifyDataSetChanged();
                         jobToRemoveFromList = null;
@@ -193,6 +231,16 @@ public class RequestListActivity extends ListActivity
                     String fileHash = response.getString("fileHash");
                     // do decrypt
                     jobToRemoveFromList = null;
+                    break;
+                }
+                case Constants.JOB_GET_JOBS: {
+                    JSONArray list = response.getJSONArray("information");
+                    Gson gson = new Gson();
+                    Job[] jobs = gson.fromJson(list.toString(), Job[].class);
+                    jobsList = new ArrayList<>(Arrays.asList(jobs));
+                    myAdapter.clear();
+                    myAdapter.addAll(jobs);
+                    myAdapter.notifyDataSetChanged();
                     break;
                 }
             }

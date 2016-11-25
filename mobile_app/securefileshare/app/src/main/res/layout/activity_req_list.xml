@@ -7,13 +7,7 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context=".UnusedActivity" >
-
-    <ListView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@android:id/list"
-        android:background="#aaaaaa" />
+    tools:context=".MainActivity" >
 
     <TextView
         android:layout_width="wrap_content"
@@ -21,6 +15,24 @@
         android:layout_centerHorizontal="true"
         android:id="@android:id/empty"
         android:text="You have no requests"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:layout_centerVertical="true"/>
+
+    <Button
+        android:text="@string/btn_refresh_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/btn_refresh_list"
+        android:layout_alignParentEnd="true"
+        android:onClick="refreshListBtnClick"/>
+
+    <ListView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@android:id/list"
+        android:background="#aaaaaa"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true"
+        android:layout_below="@id/btn_refresh_list"/>
 
 </RelativeLayout>
