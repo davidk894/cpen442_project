@@ -210,10 +210,10 @@ public class MainActivity extends AppCompatActivity
                         return;
                     }
                     EncryptedPlusKey EPK = FileEncyrption.EncryptFile(fileAccessInfo.filePath, fileAccessInfo.fileData, userId);
-                    fileAccessInfo.fileData = EPK.encryptedFile.getEncryptedData();
+                    fileAccessInfo.fileData = EPK.encryptedFile.toBytes();
 
                     Toast.makeText(this, "Encrypted", Toast.LENGTH_SHORT).show();
-                    byte[] fileHash = HashByteWrapper.computeHash(EPK.encryptedFile.toBytes());
+                    byte[] fileHash = HashByteWrapper.computeHash(fileAccessInfo.fileData);
 
                     addKeyRequest(fileHash, EPK.key);
                     Toast.makeText(this, "Sent Key", Toast.LENGTH_SHORT).show();
@@ -253,6 +253,7 @@ public class MainActivity extends AppCompatActivity
                     Toast.makeText(this, "File Format Exception", Toast.LENGTH_SHORT).show();
                     return;
                 }
+
                 fileAccessInfo.filePath = FileIO.combine(toDecrypt_Path_Full, newFileName);
                 fileAccessInfo.purpose = FileAccessPermission.Purpose.toDecrypt_write;
             case toDecrypt_write:
