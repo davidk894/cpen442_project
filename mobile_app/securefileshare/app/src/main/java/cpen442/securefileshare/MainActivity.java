@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity
     private String Decrypted_Folder_Name = "SecureFileShare_Decrypted";
     private String Decrypted_Path_Full = FileIO.combine(externalStorageDir, Decrypted_Folder_Name);
     private static final String ENCRYPTED_FILE_EXTENTION = ".crypt";
+    private String Encypted_Path_Full = FileIO.combine(externalStorageDir, "SecureFileShare_encrypted");
     private JSONArray jobsList;
 
     @Override
@@ -221,8 +222,19 @@ public class MainActivity extends AppCompatActivity
                     Toast.makeText(this, "Encryption Failed", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                //Fallthrough
+
+                File dir = new File( Encypted_Path_Full );
+                if (!dir.isDirectory()) {
+                    if(!dir.mkdir()){
+                        Toast.makeText(this, "Could not make dir", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                }
+                fileAccessInfo.filePath = FileIO.combine(Encypted_Path_Full,
+                        new File(fileAccessInfo.filePath).getName().toString()
+                                + ENCRYPTED_FILE_EXTENTION);
                 fileAccessInfo.purpose = FileAccessPermission.Purpose.Encrypt_write;
+                //Fallthrough
             case Encrypt_write:
                 if (!writeToFile(fileAccessInfo)) {
                     return;
