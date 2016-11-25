@@ -2,14 +2,17 @@ package cpen442.securefileshare;
 
 import android.Manifest;
 import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.hardware.fingerprint.FingerprintManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
+import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -35,14 +38,13 @@ import cpen442.securefileshare.encryption.FileIO;
 import cpen442.securefileshare.encryption.HashByteWrapper;
 import cpen442.securefileshare.encryption.Utility;
 
-
-public class MainActivity extends AppCompatActivity
+public class HomeActivity extends AppCompatActivity
         implements RequestAndAuthenticationService.IAuthenticatable {
 
     private SharedPreferences mSharedPreferences;
     private BroadcastReceiver fbReceiver;
-    private HashMap<Integer,Object> permissionMap = new HashMap<Integer, Object>();
-    private int PermissionNumber = 0;
+    private FingerprintAuthenticationDialogFragment fragment;
+    private String jobId;
     private String To_Decrypt_Folder_Name = "SecureFileShare_ToDecrypt";
     private String externalStorageDir = Environment.getExternalStorageDirectory().toString();
     private String toDecrypt_Path_Full = FileIO.combine(externalStorageDir, To_Decrypt_Folder_Name);
@@ -50,10 +52,13 @@ public class MainActivity extends AppCompatActivity
     private String Decrypted_Path_Full = FileIO.combine(externalStorageDir, Decrypted_Folder_Name);
     private static final String ENCRYPTED_FILE_EXTENTION = ".crypt";
 
+    private HashMap<Integer,Object> permissionMap = new HashMap<Integer, Object>();
+    private int PermissionNumber = 0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_home);
 
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         fbReceiver = new FBReceiver();
@@ -63,9 +68,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onPause() {
         super.onPause();
-        if(fbReceiver != null) {
-            unregisterReceiver(fbReceiver);
-        }
+        unregisterReceiver(fbReceiver);
     }
 
     @Override
@@ -94,25 +97,8 @@ public class MainActivity extends AppCompatActivity
 //            service.makeRequest(this, Constants.ADD_KEY_URL, requestParams);
 //        }
     }
+    public void decryptBtnClick(View v) { showFileChooser(Constants.FILE_CHOOSER_DECRYPT); }
 
-    public void decryptBtnClick(View v) {
-//        JSONObject requestParams = new JSONObject();
-//        String userId = mSharedPreferences.getString(Constants.SHARED_PREF_USER_ID, null);
-//        if(userId != null) {
-//            try {
-//                requestParams.put("targetID", userId);
-//                requestParams.put("fileHash", "1234567890");
-//                requestParams.put("userID", userId);
-//            } catch (JSONException e) {
-//                e.printStackTrace();
-//            }
-//            RequestAndAuthenticationService service = RequestAndAuthenticationService.getInstance();
-//            service.setDoJob(true);
-//            service.setSharedPreferences(mSharedPreferences);
-//            service.setCipherMode(Cipher.DECRYPT_MODE);
-//            service.makeRequest(this, Constants.REQUEST_KEY_URL, requestParams);
-//        }
-    }
 
     public void reqListBtnClick(View v) {
         JSONObject requestParams = new JSONObject();
@@ -129,32 +115,6 @@ public class MainActivity extends AppCompatActivity
             service.setCipherMode(Cipher.DECRYPT_MODE);
             service.makeRequest(this, Constants.GET_JOB_LIST_URL, requestParams);
         }
-    }
-
-    public void testFunction(View v) {
-        SharedPreferences.Editor editor = mSharedPreferences.edit();
-        editor.remove(Constants.SHARED_PREF_USER_ID);
-        editor.remove(Constants.SHARED_PREF_FP_SECRET);
-        editor.commit();
-        System.out.println("Removed shared prefs");
-        if(KeyStoreInterface.keyExists()) {
-            KeyStoreInterface.removeKey();
-            System.out.println("Removed key");
-        }
-//        Intent intent = new Intent(this, RequestListActivity.class);
-//        String jobsListJson =
-//                "[" +
-//                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"8\", \"contactNumber\":\"1234567890\", \"name\":\"testuser\"}," +
-//                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"8\", \"contactNumber\":\"1234567890\", \"name\":\"testuser\"}," +
-//                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"8\", \"contactNumber\":\"1234567890\", \"name\":\"testuser\"}," +
-//                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"8\", \"contactNumber\":\"1234567890\", \"name\":\"testuser\"}," +
-//                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"8\", \"contactNumber\":\"1234567890\", \"name\":\"testuser\"}," +
-//                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"8\", \"contactNumber\":\"1234567890\", \"name\":\"testuser\"}," +
-//                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"8\", \"contactNumber\":\"1234567890\", \"name\":\"testuser\"}," +
-//                    "{\"userID\": \"111111\", \"fileHash\": \"111111\", \"jobID\":111111\", \"jobType\":\"9\", \"contactNumber\":\"1234567890\"}" +
-//                "]";
-//        intent.putExtra(Constants.JOBS_LIST_JSON, jobsListJson);
-//        startActivity(intent);
     }
 
     // Permissions
@@ -213,8 +173,8 @@ public class MainActivity extends AppCompatActivity
                     if (allGranted){
                         boolean isFileAccess = true;
                         for (String p : permissions){
-                            if (p != Manifest.permission.WRITE_EXTERNAL_STORAGE
-                                    || p != Manifest.permission.READ_EXTERNAL_STORAGE) {
+                            if (!p.equals(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                                    || !p.equals(Manifest.permission.READ_EXTERNAL_STORAGE)) {
                                 isFileAccess = false;
                             }
                         }
@@ -442,6 +402,71 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    // Authentication
+    public void startAuthenticate() {
+        Cipher cipher = KeyStoreInterface.cipherInit(Cipher.DECRYPT_MODE);
+        FingerprintManager.CryptoObject cryptoObject = new FingerprintManager.CryptoObject(cipher);
+
+        fragment = new FingerprintAuthenticationDialogFragment();
+        fragment.setCryptoObject(cryptoObject);
+
+        fragment.show(getFragmentManager(), Constants.DIALOG_FRAGMENT_TAG);
+    }
+
+    /**
+     * Fingerprint authentication complete, now build request to server
+     * @param smsSecret
+     * @param withFingerprint
+     * @param cryptoObject
+     */
+    public void onAuthenticated(String smsSecret, boolean withFingerprint,
+                                @Nullable FingerprintManager.CryptoObject cryptoObject) {
+        assert(jobId != null);
+        assert(cryptoObject != null);
+        fragment = null;
+
+        String encryptedFPSecret = mSharedPreferences.getString(
+                Constants.SHARED_PREF_FP_SECRET, null);
+        if(encryptedFPSecret != null) {
+            String fpSecret = Utility.toBase64String(KeyStoreInterface.transform(
+                    cryptoObject.getCipher(), Utility.toBytes(encryptedFPSecret)));
+            if (withFingerprint) {
+                JSONObject reqParams = new JSONObject();
+                try {
+                    reqParams.put("jobID", jobId);
+                    reqParams.put("fpSecret", fpSecret);
+                    reqParams.put("smsSecret", smsSecret);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                authenticateRequest(this, reqParams);
+            }
+        }
+    }
+
+    public void authenticateRequest(final Context mContext, JSONObject requestParams) {
+        HttpRequestUtility request = new HttpRequestUtility(new HttpRequestUtility.HttpResponseUtility() {
+            @Override
+            public void processResponse(String response) {
+                try {
+                    JSONObject resp = new JSONObject(response);
+                    if(resp.getBoolean("success")) {
+                        processAuthenticateResponse(resp);
+                    } else {
+                        // Toast response message
+                        String respMsg = resp.getString("responseMessage");
+                        Toast.makeText(mContext, respMsg, Toast.LENGTH_SHORT).show();
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        request.setRequestType(HttpRequestUtility.POST_METHOD);
+        request.setRequestURL(Constants.AUTHENTICATE_URL);
+        request.setJSONString(requestParams.toString());
+        request.execute();
+    }
     @Override
     public void processAuthenticateResponse(JSONObject resp) {
         try {
@@ -470,5 +495,4 @@ public class MainActivity extends AppCompatActivity
             e.printStackTrace();
         }
     }
-
 }

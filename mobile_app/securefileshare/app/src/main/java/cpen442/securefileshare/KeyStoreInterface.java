@@ -25,6 +25,8 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 
+import cpen442.securefileshare.encryption.Utility;
+
 
 public class KeyStoreInterface {
     private static final String AKeyStore_String = "AndroidKeyStore";
@@ -121,25 +123,11 @@ public class KeyStoreInterface {
         return null;
     }
 
-    public static String toBase64String(byte[] bytes){
-        byte[] data = Base64.encode(bytes, Base64.DEFAULT);
-        return new String(data, StandardCharsets.UTF_8);
-    }
-
-    public static byte[] toBytes(String base64) {
-        byte[] data = base64.getBytes(StandardCharsets.UTF_8);
-        return Base64.decode(data, Base64.DEFAULT);
-    }
-
     public static String generateCryptoMessage() {
-        return generateSecureRandom(MESSAGE_SIZE);
+        return generateSecureRandomString(MESSAGE_SIZE);
     }
 
-    private static String generateSecureRandom(int numberOfBytes) {
-        byte[] buff = new byte[numberOfBytes];
-        SecureRandom secureRandom = new SecureRandom();
-        secureRandom.nextBytes(buff);
-        String randomString = toBase64String(buff);
-        return randomString;
+    private static String generateSecureRandomString(int numberOfBytes) {
+        return Utility.toBase64String(Utility.generateSecureRandom(numberOfBytes));
     }
 }

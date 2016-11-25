@@ -5,12 +5,12 @@ package cpen442.securefileshare.encryption;
  */
 
 public class EncryptedPlusKey {
-    public byte[] encryptedFile;
+    public EncryptedFileFormat encryptedFile;
     public byte[] key;
 
     public EncryptedPlusKey(){}
-    public EncryptedPlusKey(byte[] file, byte[] key){
-        this.encryptedFile = file;
+    public EncryptedPlusKey(EncryptedFileFormat encryptedFile, byte[] key){
+        this.encryptedFile = encryptedFile;
         this.key = key;
     }
 

@@ -18,11 +18,11 @@ public class FileEncyrption {
         FileFormat FF = new FileFormat(fileBytes, fileName);
         SecretKey key = Encryption.generateKey();
         byte[] encrypted = EncryptionWrapper.encrypt(FF.toBytes(), key);
-        return new EncryptedPlusKey(encrypted, key.getEncoded());
+        EncryptedFileFormat eff = new EncryptedFileFormat(encrypted, accountID);
+        return new EncryptedPlusKey(eff, key.getEncoded());
     }
 
-    public static FileFormat DecryptFile(String filePath, byte[] key) throws IOException, EncryptionException, FormatException {
-        byte[] encryptedFileBytes = FileIO.ReadAllBytes(filePath);
+    public static FileFormat DecryptFile(byte[] encryptedFileBytes, byte[] key) throws EncryptionException, FormatException {
         byte[] decryptedBytes = EncryptionWrapper.decrypt(encryptedFileBytes, Encryption.toKey(key));
         return new FileFormat(decryptedBytes);
     }

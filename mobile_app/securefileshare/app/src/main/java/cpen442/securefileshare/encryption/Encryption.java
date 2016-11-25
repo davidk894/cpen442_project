@@ -28,7 +28,7 @@ public class Encryption {
 
     public static byte[] generateIV()
     {
-        return generateSecureRandom(IV_SIZE);
+        return Utility.generateSecureRandom(IV_SIZE);
     }
 
     public static SecretKey generateKey() {
@@ -61,13 +61,6 @@ public class Encryption {
     public static byte[] decrypt(byte[] encrypted, SecretKey key) throws InvalidKeyException, BadPaddingException, IllegalBlockSizeException{
         byte[] IV = Arrays.copyOf(encrypted, IV_SIZE);
         return transform(encrypted, key, IV, Cipher.DECRYPT_MODE);
-    }
-
-    public static byte[] generateSecureRandom(int numberOfBytes) {
-        byte[] buff = new byte[numberOfBytes];
-        SecureRandom random = new SecureRandom();
-        random.nextBytes(buff);
-        return buff;
     }
 
     public static byte[] transform(byte[] dataWithIV, SecretKey key, byte[] IV, int opmode) throws InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
