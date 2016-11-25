@@ -7,10 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.hardware.fingerprint.FingerprintManager;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.PermissionChecker;
@@ -26,18 +23,15 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 
-import java.util.HashMap;
-
 import javax.crypto.Cipher;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity
+        implements RequestAndAuthenticationService.IAuthenticatable {
 
     private SharedPreferences mSharedPreferences;
     private BroadcastReceiver fbReceiver;
-    private FingerprintAuthenticationDialogFragment fragment;
     private String fpSecret;
-    private String jobId;
 
 
     @Override
@@ -125,9 +119,6 @@ public class MainActivity extends AppCompatActivity {
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // Permission granted
-                    if(fragment != null) {
-                        fragment.readSMSSecret();
-                    }
                 } else {
                     // Don't do anything then..
                 }
@@ -161,121 +152,35 @@ public class MainActivity extends AppCompatActivity {
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            createAccountRequest(this, reqParams);
+            createAccountRequest(reqParams);
         }
     }
 
-    /**
-     * POST request to server to create account
-     * @param mContext
-     * @param requestParams Name, IMEI, PhoneNumber, FirebaseTokenID
-     */
-    public void createAccountRequest(final Context mContext, JSONObject requestParams) {
-        HttpRequestUtility request = new HttpRequestUtility(new HttpRequestUtility.HttpResponseUtility() {
-            @Override
-            public void processResponse(String response) {
-                try {
-                    JSONObject resp = new JSONObject(response);
-                    if(resp.getBoolean("success")) {
-                        jobId = resp.getString("jobID");
-                        authCreateAccount();
-                    } else {
-                        // Toast response message
-                        String respMsg = resp.getString("responseMessage");
-                        Toast.makeText(mContext, respMsg, Toast.LENGTH_SHORT).show();
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        request.setRequestType(HttpRequestUtility.POST_METHOD);
-        request.setRequestURL(Constants.CREATE_ACCOUNT_URL);
-        request.setJSONString(requestParams.toString());
-        request.execute();
+    public void createAccountRequest(JSONObject requestParams) {
+        RequestAndAuthenticationService service = RequestAndAuthenticationService.getInstance();
+
+        service.setCipherMode(Cipher.ENCRYPT_MODE);
+        service.setDoJob(true);
+        service.setFpSecret(fpSecret);
+        service.setSharedPreferences(mSharedPreferences);
+        service.makeRequest(this, Constants.CREATE_ACCOUNT_URL, requestParams);
     }
 
-    // Authentication
-    public void authCreateAccount() {
-        if(!KeyStoreInterface.keyExists()) {
-            KeyStoreInterface.generateKey();
+    @Override
+    public void processAuthenticateResponse(JSONObject response) {
+        RequestAndAuthenticationService service = RequestAndAuthenticationService.getInstance();
+        fpSecret = service.getFpSecret(); // This should return encrypted fp secret
+        service.setFpSecret(null);
+        service.setSharedPreferences(null);
+        try {
+            String userId = response.getString("information");
+            SharedPreferences.Editor editor = mSharedPreferences.edit();
+            editor.putString(Constants.SHARED_PREF_USER_ID, userId);
+            editor.putString(Constants.SHARED_PREF_FP_SECRET, fpSecret);
+            editor.commit();
+            fpSecret = null;
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
-        Cipher cipher = KeyStoreInterface.cipherInit(Cipher.ENCRYPT_MODE);
-        FingerprintManager.CryptoObject cryptoObject = new FingerprintManager.CryptoObject(cipher);
-
-        fragment = new FingerprintAuthenticationDialogFragment();
-        fragment.setCryptoObject(cryptoObject);
-
-        fragment.show(getFragmentManager(), Constants.DIALOG_FRAGMENT_TAG);
-    }
-
-    /**
-     * Fingerprint authentication complete, now build request to server
-     * Normally on authenticate, the encrypted fpSecret would be retrieved
-     * from shared preferences and then decrypted with the cryptoObject
-     * But since we are only going to be authenticating for create account here
-     * the fpSecret should be in memory so we can just use it directly
-     * @param smsSecret
-     * @param withFingerprint
-     * @param cryptoObject
-     */
-    public void onAuthenticated(String smsSecret, boolean withFingerprint,
-                                @Nullable FingerprintManager.CryptoObject cryptoObject) {
-        assert(jobId != null);
-        assert(cryptoObject != null);
-
-        fragment = null;
-
-        if(withFingerprint) {
-            JSONObject reqParams = new JSONObject();
-            try {
-                reqParams.put("jobID", jobId);
-                reqParams.put("fpSecret", fpSecret);
-                reqParams.put("smsSecret", smsSecret);
-                reqParams.put("doJob", true);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            fpSecret = KeyStoreInterface.toBase64String(KeyStoreInterface.transform(
-                    cryptoObject.getCipher(), KeyStoreInterface.toBytes(fpSecret)));
-            authenticateRequest(this, reqParams);
-        }
-    }
-
-    /**
-     * Send authentication request to server and handle response
-     * @param mContext
-     * @param requestParams
-     */
-    public void authenticateRequest(final Context mContext, JSONObject requestParams) {
-        HttpRequestUtility request = new HttpRequestUtility(new HttpRequestUtility.HttpResponseUtility() {
-            @Override
-            public void processResponse(String response) {
-                try {
-                    JSONObject resp = new JSONObject(response);
-                    boolean success = resp.getBoolean("success");
-                    if(success) {
-                        if(resp.getInt("jobType") == Constants.JOB_CREATE_ACCOUNT) {
-                            String userId = resp.getString("information");
-                            SharedPreferences.Editor editor = mSharedPreferences.edit();
-                            editor.putString(Constants.SHARED_PREF_USER_ID, userId);
-                            editor.putString(Constants.SHARED_PREF_FP_SECRET, fpSecret);
-                            editor.commit();
-                            fpSecret = null;
-                        }
-                    } else {
-                        // Toast response message
-                        String respMsg = resp.getString("responseMessage");
-                        Toast.makeText(mContext, respMsg, Toast.LENGTH_SHORT).show();
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        request.setRequestType(HttpRequestUtility.POST_METHOD);
-        request.setRequestURL(Constants.AUTHENTICATE_URL);
-        request.setJSONString(requestParams.toString());
-        request.execute();
     }
 }

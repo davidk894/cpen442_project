@@ -13,7 +13,6 @@ import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.view.View;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -21,18 +20,15 @@ import com.google.gson.Gson;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-
 import javax.crypto.Cipher;
 
-public class RequestListActivity extends ListActivity {
+public class RequestListActivity extends ListActivity
+        implements RequestAndAuthenticationService.IAuthenticatable{
 
     private SharedPreferences mSharedPreferences;
     private BroadcastReceiver fbReceiver;
-    private FingerprintAuthenticationDialogFragment fragment;
     private RequestListAdapter myAdapter;
     private Job jobToRemoveFromList;
-    private String jobId;
     private boolean doJob;
 
     @Override
@@ -139,7 +135,13 @@ public class RequestListActivity extends ListActivity {
                 e.printStackTrace();
             }
             jobToRemoveFromList = item;
-            makeRequest(this, Constants.RESPOND_KEY_URL, requestParams);
+
+            RequestAndAuthenticationService service =
+                    RequestAndAuthenticationService.getInstance();
+            service.setCipherMode(Cipher.DECRYPT_MODE);
+            service.setSharedPreferences(mSharedPreferences);
+            service.setDoJob(doJob);
+            service.makeRequest(this, Constants.RESPOND_KEY_URL, requestParams);
         }
     }
 
@@ -154,110 +156,20 @@ public class RequestListActivity extends ListActivity {
                 e.printStackTrace();
             }
             jobToRemoveFromList = item;
-            makeRequest(this, Constants.GET_KEY_URL, requestParams);
+
+            RequestAndAuthenticationService service =
+                    RequestAndAuthenticationService.getInstance();
+            service.setSharedPreferences(mSharedPreferences);
+            service.setCipherMode(Cipher.DECRYPT_MODE);
+            service.setDoJob(doJob);
+            service.makeRequest(this, Constants.GET_KEY_URL, requestParams);
         }
     }
 
-    // Build HTTP request + handle response
-    public void makeRequest(final Context mContext, String requestURL, JSONObject requestParams) {
-        HttpRequestUtility request = new HttpRequestUtility(new HttpRequestUtility.HttpResponseUtility() {
-            @Override
-            public void processResponse(String response) {
-                try {
-                    JSONObject resp = new JSONObject(response);
-                    if(resp.getBoolean("success")) {
-                        // job id
-                        jobId = resp.getString("jobID");
-                        // start the authentication process
-                        startAuthenticate();
-                    } else {
-                        // Toast response message
-                        jobToRemoveFromList = null;
-                        String respMsg = resp.getString("responseMessage");
-                        Toast.makeText(mContext, respMsg, Toast.LENGTH_SHORT).show();
-                    }
-                } catch (JSONException e) {
-                    jobToRemoveFromList = null;
-                    e.printStackTrace();
-                }
-            }
-        });
-        request.setRequestType(HttpRequestUtility.POST_METHOD);
-        request.setRequestURL(requestURL);
-        request.setJSONString(requestParams.toString());
-        request.execute();
-    }
-
-    // Authentication
-    public void startAuthenticate() {
-        Cipher cipher = KeyStoreInterface.cipherInit(Cipher.DECRYPT_MODE);
-        FingerprintManager.CryptoObject cryptoObject = new FingerprintManager.CryptoObject(cipher);
-
-        fragment = new FingerprintAuthenticationDialogFragment();
-        fragment.setCryptoObject(cryptoObject);
-
-        fragment.show(getFragmentManager(), Constants.DIALOG_FRAGMENT_TAG);
-    }
-
-    /**
-     * Fingerprint authentication complete, now build request to server
-     * @param smsSecret
-     * @param withFingerprint
-     * @param cryptoObject
-     */
-    public void onAuthenticated(String smsSecret, boolean withFingerprint,
-                                @Nullable FingerprintManager.CryptoObject cryptoObject) {
-        assert(jobId != null);
-        assert(cryptoObject != null);
-        fragment = null;
-
-        String encryptedFPSecret = mSharedPreferences.getString(
-                Constants.SHARED_PREF_FP_SECRET, null);
-        if(encryptedFPSecret != null) {
-            String fpSecret = KeyStoreInterface.toBase64String(KeyStoreInterface.transform(
-                    cryptoObject.getCipher(), KeyStoreInterface.toBytes(encryptedFPSecret)));
-            if (withFingerprint) {
-                JSONObject reqParams = new JSONObject();
-                try {
-                    reqParams.put("jobID", jobId);
-                    reqParams.put("fpSecret", fpSecret);
-                    reqParams.put("smsSecret", smsSecret);
-                    reqParams.put("doJob", doJob); // this is false when we want to delete the job
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                authenticateRequest(this, reqParams);
-            }
-        }
-    }
-
-    public void authenticateRequest(final Context mContext, JSONObject requestParams) {
-        HttpRequestUtility request = new HttpRequestUtility(new HttpRequestUtility.HttpResponseUtility() {
-            @Override
-            public void processResponse(String response) {
-                try {
-                    JSONObject resp = new JSONObject(response);
-                    if(resp.getBoolean("success")) {
-                        processAuthenticateResponse(resp);
-                    } else {
-                        // Toast response message
-                        String respMsg = resp.getString("responseMessage");
-                        Toast.makeText(mContext, respMsg, Toast.LENGTH_SHORT).show();
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        request.setRequestType(HttpRequestUtility.POST_METHOD);
-        request.setRequestURL(Constants.AUTHENTICATE_URL);
-        request.setJSONString(requestParams.toString());
-        request.execute();
-    }
-
-    private void processAuthenticateResponse(JSONObject resp) {
+    @Override
+    public void processAuthenticateResponse(JSONObject response) {
         try {
-            Integer jobType = resp.getInt("jobType");
+            Integer jobType = response.getInt("jobType");
             switch(jobType) {
                 case Constants.JOB_RESPOND_KEY: {
                     if(jobToRemoveFromList != null) {
@@ -276,15 +188,13 @@ public class RequestListActivity extends ListActivity {
                     break;
                 }
                 case Constants.JOB_GOT_KEY: {
-                    JSONObject information = resp.getJSONObject("information");
-                    String key = resp.getString("key");
-                    String fileHash = resp.getString("fileHash");
+                    JSONObject information = response.getJSONObject("information");
+                    String key = response.getString("key");
+                    String fileHash = response.getString("fileHash");
                     // do decrypt
                     jobToRemoveFromList = null;
                     break;
                 }
-                default:
-                    //do nothing;
             }
         } catch (JSONException e) {
             e.printStackTrace();

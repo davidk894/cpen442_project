@@ -33,12 +33,11 @@ import cpen442.securefileshare.encryption.FormatException;
 import cpen442.securefileshare.encryption.FileIO;
 import cpen442.securefileshare.encryption.HashByteWrapper;
 
-public class HomeActivity extends AppCompatActivity {
+public class HomeActivity extends AppCompatActivity
+        implements RequestAndAuthenticationService.IAuthenticatable {
 
     private SharedPreferences mSharedPreferences;
     private BroadcastReceiver fbReceiver;
-    private FingerprintAuthenticationDialogFragment fragment;
-    private String jobId;
     private static final String ENCRYPTED_FILE_EXTENTION = ".crypt";
     private HashMap<Integer,Object> permissionMap = new HashMap<Integer, Object>();
     private int PermissionNumber = 0;
@@ -78,7 +77,11 @@ public class HomeActivity extends AppCompatActivity {
 //            } catch (JSONException e) {
 //                e.printStackTrace();
 //            }
-//            makeRequest(this, Constants.ADD_KEY_URL, requestParams);
+//            RequestAndAuthenticationService service = RequestAndAuthenticationService.getInstance();
+//            service.setDoJob(true);
+//            service.setSharedPreferences(mSharedPreferences);
+//            service.setCipherMode(Cipher.DECRYPT_MODE);
+//            service.makeRequest(this, Constants.ADD_KEY_URL, requestParams);
 //        }
     }
 
@@ -93,7 +96,11 @@ public class HomeActivity extends AppCompatActivity {
 //            } catch (JSONException e) {
 //                e.printStackTrace();
 //            }
-//            makeRequest(this, Constants.REQUEST_KEY_URL, requestParams);
+//            RequestAndAuthenticationService service = RequestAndAuthenticationService.getInstance();
+//            service.setDoJob(true);
+//            service.setSharedPreferences(mSharedPreferences);
+//            service.setCipherMode(Cipher.DECRYPT_MODE);
+//            service.makeRequest(this, Constants.REQUEST_KEY_URL, requestParams);
 //        }
     }
 
@@ -106,7 +113,11 @@ public class HomeActivity extends AppCompatActivity {
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            makeRequest(this, Constants.GET_JOB_LIST_URL, requestParams);
+            RequestAndAuthenticationService service = RequestAndAuthenticationService.getInstance();
+            service.setDoJob(true);
+            service.setSharedPreferences(mSharedPreferences);
+            service.setCipherMode(Cipher.DECRYPT_MODE);
+            service.makeRequest(this, Constants.GET_JOB_LIST_URL, requestParams);
         }
     }
 
@@ -302,7 +313,11 @@ public class HomeActivity extends AppCompatActivity {
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            makeRequest(this, Constants.ADD_KEY_URL, requestParams);
+            RequestAndAuthenticationService service = RequestAndAuthenticationService.getInstance();
+            service.setDoJob(true);
+            service.setSharedPreferences(mSharedPreferences);
+            service.setCipherMode(Cipher.DECRYPT_MODE);
+            service.makeRequest(this, Constants.ADD_KEY_URL, requestParams);
         }
     }
     public void requestKey(String targetId, byte[] fileHash){
@@ -316,7 +331,11 @@ public class HomeActivity extends AppCompatActivity {
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            makeRequest(this, Constants.REQUEST_KEY_URL, requestParams);
+            RequestAndAuthenticationService service = RequestAndAuthenticationService.getInstance();
+            service.setDoJob(true);
+            service.setSharedPreferences(mSharedPreferences);
+            service.setCipherMode(Cipher.DECRYPT_MODE);
+            service.makeRequest(this, Constants.REQUEST_KEY_URL, requestParams);
         }
     }
 
@@ -354,74 +373,8 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-    // Authentication
-    public void startAuthenticate() {
-        Cipher cipher = KeyStoreInterface.cipherInit(Cipher.DECRYPT_MODE);
-        FingerprintManager.CryptoObject cryptoObject = new FingerprintManager.CryptoObject(cipher);
-
-        fragment = new FingerprintAuthenticationDialogFragment();
-        fragment.setCryptoObject(cryptoObject);
-
-        fragment.show(getFragmentManager(), Constants.DIALOG_FRAGMENT_TAG);
-    }
-
-    /**
-     * Fingerprint authentication complete, now build request to server
-     * @param smsSecret
-     * @param withFingerprint
-     * @param cryptoObject
-     */
-    public void onAuthenticated(String smsSecret, boolean withFingerprint,
-                                @Nullable FingerprintManager.CryptoObject cryptoObject) {
-        assert(jobId != null);
-        assert(cryptoObject != null);
-        fragment = null;
-
-        String encryptedFPSecret = mSharedPreferences.getString(
-                Constants.SHARED_PREF_FP_SECRET, null);
-        if(encryptedFPSecret != null) {
-            String fpSecret = KeyStoreInterface.toBase64String(KeyStoreInterface.transform(
-                    cryptoObject.getCipher(), KeyStoreInterface.toBytes(encryptedFPSecret)));
-            if (withFingerprint) {
-                JSONObject reqParams = new JSONObject();
-                try {
-                    reqParams.put("jobID", jobId);
-                    reqParams.put("fpSecret", fpSecret);
-                    reqParams.put("smsSecret", smsSecret);
-                    reqParams.put("doJob", true);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                authenticateRequest(this, reqParams);
-            }
-        }
-    }
-
-    public void authenticateRequest(final Context mContext, JSONObject requestParams) {
-        HttpRequestUtility request = new HttpRequestUtility(new HttpRequestUtility.HttpResponseUtility() {
-            @Override
-            public void processResponse(String response) {
-                try {
-                    JSONObject resp = new JSONObject(response);
-                    if(resp.getBoolean("success")) {
-                        processAuthenticateResponse(resp);
-                    } else {
-                        // Toast response message
-                        String respMsg = resp.getString("responseMessage");
-                        Toast.makeText(mContext, respMsg, Toast.LENGTH_SHORT).show();
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        request.setRequestType(HttpRequestUtility.POST_METHOD);
-        request.setRequestURL(Constants.AUTHENTICATE_URL);
-        request.setJSONString(requestParams.toString());
-        request.execute();
-    }
-
-    private void processAuthenticateResponse(JSONObject resp) {
+    @Override
+    public void processAuthenticateResponse(JSONObject resp) {
         try {
             Integer jobType = resp.getInt("jobType");
             switch(jobType) {
@@ -443,37 +396,10 @@ public class HomeActivity extends AppCompatActivity {
                     startActivity(intent);
                     break;
                 }
-                default:
-                    //do nothing;
             }
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
 
-    // Build HTTP request + handle response
-    public void makeRequest(final Context mContext, String requestURL, JSONObject requestParams) {
-        HttpRequestUtility request = new HttpRequestUtility(new HttpRequestUtility.HttpResponseUtility() {
-            @Override
-            public void processResponse(String response) {
-                try {
-                    JSONObject resp = new JSONObject(response);
-                    if(resp.getBoolean("success")) {
-                        jobId = resp.getString("jobID");
-                        startAuthenticate();
-                    } else {
-                        // Toast response message
-                        String respMsg = resp.getString("responseMessage");
-                        Toast.makeText(mContext, respMsg, Toast.LENGTH_SHORT).show();
-                    }
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        request.setRequestType(HttpRequestUtility.POST_METHOD);
-        request.setRequestURL(requestURL);
-        request.setJSONString(requestParams.toString());
-        request.execute();
-    }
 }

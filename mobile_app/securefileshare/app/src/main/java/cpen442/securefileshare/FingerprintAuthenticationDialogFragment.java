@@ -42,7 +42,6 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         getDialog().setTitle(getString(R.string.authenticate));
         mView = inflater.inflate(R.layout.fingerprint_dialog_container, container, false);
         Button cancelBtn = (Button) mView.findViewById(R.id.cancel_button);
@@ -110,13 +109,8 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
     @Override
     public void onAuthenticated() {
         dismiss();
-        if (mContext instanceof MainActivity) {
-            ((MainActivity) mContext).onAuthenticated(smsSecret, true, mCryptoObject);
-        } else if (mContext instanceof HomeActivity) {
-            ((HomeActivity) mContext).onAuthenticated(smsSecret, true, mCryptoObject);
-        } else if (mContext instanceof RequestListActivity) {
-            ((RequestListActivity) mContext).onAuthenticated(smsSecret, true, mCryptoObject);
-        }
+        RequestAndAuthenticationService service = RequestAndAuthenticationService.getInstance();
+        service.onAuthenticated(mContext, smsSecret, true, mCryptoObject);
     }
 
     @Override

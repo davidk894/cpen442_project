@@ -18,7 +18,6 @@ public class Constants {
     public static final int PERMISSION_READ_SMS = 200;
 
     // Job types
-    public static final int JOB_INVALID_CODE = -1;
     public static final int JOB_CREATE_ACCOUNT = 1;
     public static final int JOB_GET_JOBS = 2;
     public static final int JOB_RESPOND_KEY = 3;
