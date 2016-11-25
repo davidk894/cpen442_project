@@ -77,41 +77,10 @@ public class MainActivity extends AppCompatActivity
     // Button click listeners
     public void encryptBtnClick(View v) {
         showFileChooser(Constants.FILE_CHOOSER_ENCRYPT);
-//        JSONObject requestParams = new JSONObject();
-//        String userId = mSharedPreferences.getString(Constants.SHARED_PREF_USER_ID, null);
-//        if(userId != null) {
-//            try {
-//                requestParams.put("userID", userId);
-//                requestParams.put("fileHash", "1234567890");
-//                requestParams.put("key", "1234567890");
-//            } catch (JSONException e) {
-//                e.printStackTrace();
-//            }
-//            RequestAndAuthenticationService service = RequestAndAuthenticationService.getInstance();
-//            service.setDoJob(true);
-//            service.setSharedPreferences(mSharedPreferences);
-//            service.setCipherMode(Cipher.DECRYPT_MODE);
-//            service.makeRequest(this, Constants.ADD_KEY_URL, requestParams);
-//        }
     }
 
     public void decryptBtnClick(View v) {
-//        JSONObject requestParams = new JSONObject();
-//        String userId = mSharedPreferences.getString(Constants.SHARED_PREF_USER_ID, null);
-//        if(userId != null) {
-//            try {
-//                requestParams.put("targetID", userId);
-//                requestParams.put("fileHash", "1234567890");
-//                requestParams.put("userID", userId);
-//            } catch (JSONException e) {
-//                e.printStackTrace();
-//            }
-//            RequestAndAuthenticationService service = RequestAndAuthenticationService.getInstance();
-//            service.setDoJob(true);
-//            service.setSharedPreferences(mSharedPreferences);
-//            service.setCipherMode(Cipher.DECRYPT_MODE);
-//            service.makeRequest(this, Constants.REQUEST_KEY_URL, requestParams);
-//        }
+        showFileChooser(Constants.FILE_CHOOSER_DECRYPT);
     }
 
     public void reqListBtnClick(View v) {
@@ -141,20 +110,6 @@ public class MainActivity extends AppCompatActivity
             KeyStoreInterface.removeKey();
             System.out.println("Removed key");
         }
-//        Intent intent = new Intent(this, RequestListActivity.class);
-//        String jobsListJson =
-//                "[" +
-//                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"8\", \"contactNumber\":\"1234567890\", \"name\":\"testuser\"}," +
-//                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"8\", \"contactNumber\":\"1234567890\", \"name\":\"testuser\"}," +
-//                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"8\", \"contactNumber\":\"1234567890\", \"name\":\"testuser\"}," +
-//                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"8\", \"contactNumber\":\"1234567890\", \"name\":\"testuser\"}," +
-//                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"8\", \"contactNumber\":\"1234567890\", \"name\":\"testuser\"}," +
-//                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"8\", \"contactNumber\":\"1234567890\", \"name\":\"testuser\"}," +
-//                    "{\"userID\": \"123456\", \"fileHash\": \"123456\", \"jobID\":123456\", \"jobType\":\"8\", \"contactNumber\":\"1234567890\", \"name\":\"testuser\"}," +
-//                    "{\"userID\": \"111111\", \"fileHash\": \"111111\", \"jobID\":111111\", \"jobType\":\"9\", \"contactNumber\":\"1234567890\"}" +
-//                "]";
-//        intent.putExtra(Constants.JOBS_LIST_JSON, jobsListJson);
-//        startActivity(intent);
     }
 
     // Permissions
@@ -184,7 +139,7 @@ public class MainActivity extends AppCompatActivity
                         }
                         case Manifest.permission.READ_EXTERNAL_STORAGE: {
                             if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
-                                handleFileAccessPermissionResult((FileAccessPermision) permissionMap.get(requestCode));
+                                handleFileAccessPermissionResult((FileAccessPermission) permissionMap.get(requestCode));
                             } else {
 
                             }
@@ -192,7 +147,7 @@ public class MainActivity extends AppCompatActivity
                         }
                         case Manifest.permission.WRITE_EXTERNAL_STORAGE: {
                             if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
-                                handleFileAccessPermissionResult((FileAccessPermision) permissionMap.get(requestCode));
+                                handleFileAccessPermissionResult((FileAccessPermission) permissionMap.get(requestCode));
                             } else {
 
                             }
@@ -219,7 +174,7 @@ public class MainActivity extends AppCompatActivity
                             }
                         }
                         if (isFileAccess) {
-                            handleFileAccessPermissionResult((FileAccessPermision) permissionMap.get(requestCode));
+                            handleFileAccessPermissionResult((FileAccessPermission) permissionMap.get(requestCode));
                         }
                     }
 
@@ -232,7 +187,7 @@ public class MainActivity extends AppCompatActivity
         permissionMap.remove(requestCode);
     }
 
-    public void handleFileAccessPermissionResult(FileAccessPermision fileAccessInfo) {
+    public void handleFileAccessPermissionResult(FileAccessPermission fileAccessInfo) {
         switch (fileAccessInfo.purpose) {
             case Encrypt_read:
                 if (!readFile(fileAccessInfo)) {
@@ -259,7 +214,7 @@ public class MainActivity extends AppCompatActivity
                     return;
                 }
                 //Fallthrough
-                fileAccessInfo.purpose = FileAccessPermision.Purpose.Encrypt_write;
+                fileAccessInfo.purpose = FileAccessPermission.Purpose.Encrypt_write;
             case Encrypt_write:
                 if (!writeToFile(fileAccessInfo)) {
                     return;
@@ -279,7 +234,7 @@ public class MainActivity extends AppCompatActivity
                     return;
                 }
                 fileAccessInfo.filePath = FileIO.combine(toDecrypt_Path_Full, newFileName);
-                fileAccessInfo.purpose = FileAccessPermision.Purpose.toDecrypt_write;
+                fileAccessInfo.purpose = FileAccessPermission.Purpose.toDecrypt_write;
             case toDecrypt_write:
                 if (!writeToFile(fileAccessInfo)) {
                     return;
@@ -311,7 +266,7 @@ public class MainActivity extends AppCompatActivity
                     Toast.makeText(this, "File Format Exception", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                fileAccessInfo.purpose = FileAccessPermision.Purpose.Decrypt_write;
+                fileAccessInfo.purpose = FileAccessPermission.Purpose.Decrypt_write;
             case Decrypt_write:
                 File DecrytpedDir = new File( Decrypted_Path_Full );
                 if (!DecrytpedDir.isDirectory()) {
@@ -329,7 +284,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private boolean readFile(FileAccessPermision fInfo){
+    private boolean readFile(FileAccessPermission fInfo){
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.READ_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -350,7 +305,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private boolean writeToFile(FileAccessPermision fInfo){
+    private boolean writeToFile(FileAccessPermission fInfo){
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -429,13 +384,13 @@ public class MainActivity extends AppCompatActivity
             String filePath = fileUri.toString();
             if (requestCode == Constants.FILE_CHOOSER_ENCRYPT) {
                 //request p
-                FileAccessPermision fInfo = new FileAccessPermision();
-                fInfo.purpose = FileAccessPermision.Purpose.Encrypt_read;
+                FileAccessPermission fInfo = new FileAccessPermission();
+                fInfo.purpose = FileAccessPermission.Purpose.Encrypt_read;
                 fInfo.filePath = filePath;
                 handleFileAccessPermissionResult(fInfo);
             } else if (requestCode == Constants.FILE_CHOOSER_DECRYPT) {
-                FileAccessPermision fInfo = new FileAccessPermision();
-                fInfo.purpose = FileAccessPermision.Purpose.Decrypt_read;
+                FileAccessPermission fInfo = new FileAccessPermission();
+                fInfo.purpose = FileAccessPermission.Purpose.Decrypt_read;
                 fInfo.filePath = filePath;
                 handleFileAccessPermissionResult(fInfo);
             }

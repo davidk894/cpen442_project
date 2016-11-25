@@ -5,7 +5,7 @@ package cpen442.securefileshare;
  */
 
 
-public class FileAccessPermision {
+public class FileAccessPermission {
     public String filePath;
     public byte[] fileData;
     public byte[] key;
@@ -20,5 +20,5 @@ public class FileAccessPermision {
         Decrypt_write
     }
 
-    public FileAccessPermision() {}
+    public FileAccessPermission() {}
 }
