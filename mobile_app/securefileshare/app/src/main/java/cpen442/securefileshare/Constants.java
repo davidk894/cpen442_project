@@ -12,6 +12,7 @@ public class Constants {
 
     public static final int FILE_CHOOSER_ENCRYPT = 300;
     public static final int FILE_CHOOSER_DECRYPT = 301;
+    public static final int ACTIVITY_REQUEST_LIST = 400;
 
     // Permission request codes
     public static final int PERMISSION_READ_PHONE_STATE = 100;

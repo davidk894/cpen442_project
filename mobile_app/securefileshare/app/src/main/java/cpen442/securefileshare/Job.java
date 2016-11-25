@@ -3,7 +3,7 @@ package cpen442.securefileshare;
 public class Job {
     private int jobType; // Got key, pending response, or pending request
     private String fileHash;
-    private String jobID;
+    private String jobId;
 
     private String userID;
 
@@ -11,37 +11,37 @@ public class Job {
     private String name;
 
     public int getJobType() {
-        return jobType;
+        return this.jobType;
     }
 
-    public void setJobType(int jobType) { jobType = jobType; }
+    public void setJobType(int jobType) { this.jobType = jobType; }
 
     public String getFileHash() {
-        return fileHash;
+        return this.fileHash;
     }
 
     public void setFileHash(String fileHash) {
-        fileHash = fileHash;
+        this.fileHash = fileHash;
     }
 
     public String getUserID() {
-        return userID;
+        return this.userID;
     }
 
     public void setUserID(String userID) {
-        userID = userID;
+        this.userID = userID;
     }
 
     public String getJobID() {
-        return jobID;
+        return this.jobId;
     }
 
     public void setJobID(String jobID) {
-        jobID = jobID;
+        this.jobId = jobID;
     }
 
     public String getContactNumber() {
-        return contactNumber;
+        return this.contactNumber;
     }
 
     public void setContactNumber(String contactNumber) {
@@ -49,7 +49,7 @@ public class Job {
     }
 
     public String getName() {
-        return name;
+        return this.name;
     }
 
     public void setName(String name) {

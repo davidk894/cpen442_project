@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity
     private String Decrypted_Path_Full = FileIO.combine(externalStorageDir, Decrypted_Folder_Name);
     private static final String ENCRYPTED_FILE_EXTENTION = ".crypt";
     private String Encypted_Path_Full = FileIO.combine(externalStorageDir, "SecureFileShare_encrypted");
+    private JSONArray jobsList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,19 +86,26 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void reqListBtnClick(View v) {
-        JSONObject requestParams = new JSONObject();
-        String userId = mSharedPreferences.getString(Constants.SHARED_PREF_USER_ID, null);
-        if(userId != null) {
-            try {
-                requestParams.put("userID", userId);
-            } catch (JSONException e) {
-                e.printStackTrace();
+        if(jobsList != null) {
+            String jobListString = jobsList.toString();
+            Intent intent = new Intent(this, RequestListActivity.class);
+            intent.putExtra(Constants.JOBS_LIST_JSON, jobListString);
+            startActivityForResult(intent, Constants.ACTIVITY_REQUEST_LIST);
+        } else {
+            JSONObject requestParams = new JSONObject();
+            String userId = mSharedPreferences.getString(Constants.SHARED_PREF_USER_ID, null);
+            if(userId != null) {
+                try {
+                    requestParams.put("userID", userId);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                RequestAndAuthenticationService service = RequestAndAuthenticationService.getInstance();
+                service.setDoJob(true);
+                service.setSharedPreferences(mSharedPreferences);
+                service.setCipherMode(Cipher.DECRYPT_MODE);
+                service.makeRequest(this, Constants.GET_JOB_LIST_URL, requestParams);
             }
-            RequestAndAuthenticationService service = RequestAndAuthenticationService.getInstance();
-            service.setDoJob(true);
-            service.setSharedPreferences(mSharedPreferences);
-            service.setCipherMode(Cipher.DECRYPT_MODE);
-            service.makeRequest(this, Constants.GET_JOB_LIST_URL, requestParams);
         }
     }
 
@@ -391,19 +399,30 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == RESULT_OK) {
-            Uri fileUri = data.getData();
-            String filePath = PathConverter.getPath(this, fileUri);
-            if (requestCode == Constants.FILE_CHOOSER_ENCRYPT) {
-                FileAccessPermission fInfo = new FileAccessPermission();
-                fInfo.purpose = FileAccessPermission.Purpose.Encrypt_read;
-                fInfo.filePath = filePath;
-                handleFileAccessPermissionResult(fInfo);
-            } else if (requestCode == Constants.FILE_CHOOSER_DECRYPT) {
-                FileAccessPermission fInfo = new FileAccessPermission();
-                fInfo.purpose = FileAccessPermission.Purpose.Decrypt_read;
-                fInfo.filePath = filePath;
-                handleFileAccessPermissionResult(fInfo);
+        if (requestCode == Constants.ACTIVITY_REQUEST_LIST) {
+            if(resultCode == RESULT_OK) {
+                String jsonArray = data.getStringExtra(Constants.JOBS_LIST_JSON);
+                try {
+                    jobsList = new JSONArray(jsonArray);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        } else {
+            if (resultCode == RESULT_OK) {
+                Uri fileUri = data.getData();
+                String filePath = PathConverter.getPath(this, fileUri);
+                if (requestCode == Constants.FILE_CHOOSER_ENCRYPT) {
+                    FileAccessPermission fInfo = new FileAccessPermission();
+                    fInfo.purpose = FileAccessPermission.Purpose.Encrypt_read;
+                    fInfo.filePath = filePath;
+                    handleFileAccessPermissionResult(fInfo);
+                } else if (requestCode == Constants.FILE_CHOOSER_DECRYPT) {
+                    FileAccessPermission fInfo = new FileAccessPermission();
+                    fInfo.purpose = FileAccessPermission.Purpose.Decrypt_read;
+                    fInfo.filePath = filePath;
+                    handleFileAccessPermissionResult(fInfo);
+                }
             }
         }
     }
@@ -424,11 +443,11 @@ public class MainActivity extends AppCompatActivity
                     break;
                 }
                 case Constants.JOB_GET_JOBS: {
-                    JSONArray jobList = resp.getJSONArray("information");
-                    String jobListString = jobList.toString();
+                    jobsList = resp.getJSONArray("information");
+                    String jobListString = jobsList.toString();
                     Intent intent = new Intent(this, RequestListActivity.class);
                     intent.putExtra(Constants.JOBS_LIST_JSON, jobListString);
-                    startActivity(intent);
+                    startActivityForResult(intent, Constants.ACTIVITY_REQUEST_LIST);
                     break;
                 }
             }
