@@ -12,6 +12,8 @@ import org.json.JSONObject;
 
 import javax.crypto.Cipher;
 
+import cpen442.securefileshare.encryption.Utility;
+
 public class RequestAndAuthenticationService {
     private String mJobId;
     private int mCipherMode; // Encrypt or Decrypt
@@ -99,11 +101,11 @@ public class RequestAndAuthenticationService {
         String encryptedFPSecret = mSharedPreferences.getString(
                 Constants.SHARED_PREF_FP_SECRET, null);
         if(encryptedFPSecret != null) {
-            mFpSecret = KeyStoreInterface.toBase64String(KeyStoreInterface.transform(
-                    cryptoObject.getCipher(), KeyStoreInterface.toBytes(encryptedFPSecret)));
+            mFpSecret = Utility.toBase64String(KeyStoreInterface.transform(
+                    cryptoObject.getCipher(), Utility.toBytes(encryptedFPSecret)));
         } else if (mCipherMode == Cipher.ENCRYPT_MODE){
-            encryptedFPSecret = KeyStoreInterface.toBase64String(KeyStoreInterface.transform(
-                    cryptoObject.getCipher(), KeyStoreInterface.toBytes(mFpSecret)));
+            encryptedFPSecret = Utility.toBase64String(KeyStoreInterface.transform(
+                    cryptoObject.getCipher(), Utility.toBytes(mFpSecret)));
         }
 
         if(mFpSecret != null && withFingerprint) {
