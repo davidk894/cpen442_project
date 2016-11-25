@@ -1,5 +1,9 @@
 package cpen442.securefileshare.encryption;
 
+import android.content.ContentResolver;
+import android.content.Context;
+import android.net.Uri;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -15,6 +19,10 @@ import java.io.IOException;
 public class FileIO {
 
     public static byte[] ReadAllBytes(String filePath) throws IOException {
+
+        Uri uri = new Uri.Builder().path(filePath).build();
+
+
         File file = new File(filePath);
         byte[] fileData = new byte[(int) file.length()];
         DataInputStream dis = new DataInputStream(new FileInputStream(file));

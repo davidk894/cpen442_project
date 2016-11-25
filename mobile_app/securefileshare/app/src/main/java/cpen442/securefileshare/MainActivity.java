@@ -381,7 +381,7 @@ public class MainActivity extends AppCompatActivity
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK) {
             Uri fileUri = data.getData();
-            String filePath = fileUri.toString();
+            String filePath = fileUri.getPath();
             if (requestCode == Constants.FILE_CHOOSER_ENCRYPT) {
                 //request p
                 FileAccessPermission fInfo = new FileAccessPermission();
