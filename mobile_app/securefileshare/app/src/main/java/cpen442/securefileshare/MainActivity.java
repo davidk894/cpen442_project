@@ -256,15 +256,15 @@ public class MainActivity extends AppCompatActivity
                 fileAccessInfo.filePath = FileIO.combine(toDecrypt_Path_Full, newFileName);
                 fileAccessInfo.purpose = FileAccessPermission.Purpose.toDecrypt_write;
             case toDecrypt_write:
-                if (!writeToFile(fileAccessInfo)) {
-                    return;
-                }
-                File dir = new File( toDecrypt_Path_Full );
+                dir = new File( toDecrypt_Path_Full );
                 if (!dir.isDirectory()) {
                     if(!dir.mkdir()){
                         Toast.makeText(this, "Could not make dir", Toast.LENGTH_SHORT).show();
                         return;
                     }
+                }
+                if (!writeToFile(fileAccessInfo)) {
+                    return;
                 }
                 fileHash = HashByteWrapper.computeHash(fileAccessInfo.fileData);
                 requestKey(fileAccessInfo.targetID, fileHash);

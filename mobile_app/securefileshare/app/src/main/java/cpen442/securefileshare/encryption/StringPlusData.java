@@ -16,7 +16,7 @@ public abstract class StringPlusData {
 
     public StringPlusData(byte[] allBytes) throws FormatException {
         int indexOfDeliminator = getIndex(allBytes, deliminator);
-        byte[] stringBytes = Arrays.copyOf(allBytes, deliminator);
+        byte[] stringBytes = Arrays.copyOf(allBytes, indexOfDeliminator);
         string = new String(stringBytes, StandardCharsets.UTF_8);
         data = Arrays.copyOfRange(allBytes, indexOfDeliminator + 1, allBytes.length);
     }
