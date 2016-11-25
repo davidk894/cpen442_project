@@ -213,6 +213,7 @@ public class RequestListActivity extends ListActivity
                         myAdapter.remove(jobToRemoveFromList);
                         myAdapter.notifyDataSetChanged();
                         jobToRemoveFromList = null;
+                        Toast.makeText(this, "Successfully authorized.", Toast.LENGTH_SHORT).show();
                     }
                     break;
                 }
@@ -222,6 +223,7 @@ public class RequestListActivity extends ListActivity
                         myAdapter.remove(jobToRemoveFromList);
                         myAdapter.notifyDataSetChanged();
                         jobToRemoveFromList = null;
+                        Toast.makeText(this, "Successfully denied request.", Toast.LENGTH_SHORT).show();
                     }
                     break;
                 }

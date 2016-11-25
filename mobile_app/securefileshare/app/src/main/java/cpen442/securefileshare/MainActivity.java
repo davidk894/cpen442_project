@@ -421,13 +421,11 @@ public class MainActivity extends AppCompatActivity
             Integer jobType = resp.getInt("jobType");
             switch(jobType) {
                 case Constants.JOB_REQUEST_KEY: {
-                    String responseMessage = resp.getString("responseMessage");
-                    Toast.makeText(this, responseMessage, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Key Request made, awaiting authoriation.", Toast.LENGTH_SHORT).show();
                     break;
                 }
                 case Constants.JOB_ADD_KEY: {
-                    String responseMessage = resp.getString("responseMessage");
-                    Toast.makeText(this, responseMessage, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Key added successfully.", Toast.LENGTH_SHORT).show();
                     break;
                 }
                 case Constants.JOB_GET_JOBS: {
