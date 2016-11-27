@@ -1,5 +1,6 @@
 package cpen442.securefileshare;
 
+import android.*;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.BroadcastReceiver;
@@ -8,6 +9,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.hardware.fingerprint.FingerprintManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -28,6 +30,15 @@ import java.util.Arrays;
 
 import javax.crypto.Cipher;
 
+import cpen442.securefileshare.encryption.EncryptedFileFormat;
+import cpen442.securefileshare.encryption.EncryptionException;
+import cpen442.securefileshare.encryption.FileEncyrption;
+import cpen442.securefileshare.encryption.FileFormat;
+import cpen442.securefileshare.encryption.FileIO;
+import cpen442.securefileshare.encryption.FormatException;
+import cpen442.securefileshare.encryption.HashByteWrapper;
+import cpen442.securefileshare.encryption.Utility;
+
 public class RequestListActivity extends ListActivity
         implements RequestAndAuthenticationService.IAuthenticatable{
 
@@ -37,11 +48,15 @@ public class RequestListActivity extends ListActivity
     private Job jobToRemoveFromList;
     private boolean doJob;
     private ArrayList<Job> jobsList;
+    PermissionHandler permissionHandler;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_req_list);
+
+        permissionHandler = new PermissionHandler(this);
 
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -231,7 +246,15 @@ public class RequestListActivity extends ListActivity
                     JSONObject information = response.getJSONObject("information");
                     String key = response.getString("key");
                     String fileHash = response.getString("fileHash");
-                    // do decrypt
+                    //Decrypt
+                    FileAccessPermission fileAccessPermission = new FileAccessPermission();
+                    fileAccessPermission.key = Utility.toBytes(key);
+                    String fileName = fileHash + Constants.ENCRYPTED_FILE_EXTENTION;
+                    fileAccessPermission.filePath = FileIO.combine(Constants.TO_DECRYPT_PATH_FULL,
+                            fileName);
+                    fileAccessPermission.purpose = FileAccessPermission.Purpose.toDecrypt_read;
+                    handleFileAccessPermissionResult(fileAccessPermission);
+
                     jobToRemoveFromList = null;
                     break;
                 }
@@ -248,6 +271,111 @@ public class RequestListActivity extends ListActivity
             }
         } catch (JSONException e) {
             e.printStackTrace();
+        }
+    }
+
+    // Permissions
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        if(grantResults.length == permissions.length) {
+            int i;
+            switch (i = permissions.length) {
+                case 1: {
+                    switch (permissions[i]) {
+                        case android.Manifest.permission.READ_PHONE_STATE: {
+                            if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+
+                            } else {
+
+                            }
+                            break;
+                        }
+                        case android.Manifest.permission.READ_SMS: {
+                            if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+
+                            } else {
+
+                            }
+                            break;
+                        }
+                        case android.Manifest.permission.READ_EXTERNAL_STORAGE: {
+                            if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                                handleFileAccessPermissionResult((FileAccessPermission) permissionHandler.get(requestCode));
+                            } else {
+
+                            }
+                            break;
+                        }
+                        case android.Manifest.permission.WRITE_EXTERNAL_STORAGE: {
+                            if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                                handleFileAccessPermissionResult((FileAccessPermission) permissionHandler.get(requestCode));
+                            } else {
+
+                            }
+                            break;
+                        }
+                        default: {
+
+                        }
+                    }
+                }
+                case 2: {
+                    boolean allGranted = true;
+                    for (int g : grantResults) {
+                        if (g != PackageManager.PERMISSION_GRANTED) {
+                            allGranted = false;
+                        }
+                    }
+                    if (allGranted){
+                        boolean isFileAccess = true;
+                        for (String p : permissions){
+                            if (p != android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+                                    || p != android.Manifest.permission.READ_EXTERNAL_STORAGE) {
+                                isFileAccess = false;
+                            }
+                        }
+                        if (isFileAccess) {
+                            handleFileAccessPermissionResult((FileAccessPermission) permissionHandler.get(requestCode));
+                        }
+                    }
+
+                }
+                default: {
+                    // do nothing
+                }
+            }
+        }
+        permissionHandler.remove(requestCode);
+    }
+
+    public void handleFileAccessPermissionResult(FileAccessPermission fileAccessInfo) {
+        switch (fileAccessInfo.purpose) {
+            case toDecrypt_read:
+                if (!permissionHandler.readFile(fileAccessInfo)) {
+                    return;
+                }
+                try {
+                    EncryptedFileFormat eff = new EncryptedFileFormat(fileAccessInfo.fileData);
+                    FileFormat ff = FileEncyrption.DecryptFile(eff.getEncryptedData(),
+                            fileAccessInfo.key);
+                    fileAccessInfo.fileData = ff.GetFileBytes();
+                    fileAccessInfo.filePath = ff.getFileName();
+                } catch (EncryptionException e) {
+                    Toast.makeText(this, "Decryption Failed", Toast.LENGTH_SHORT).show();
+                    return;
+                } catch (FormatException e) {
+                    Toast.makeText(this, "File Format Exception", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                fileAccessInfo.purpose = FileAccessPermission.Purpose.Decrypt_write;
+            case Decrypt_write:
+                fileAccessInfo.filePath = FileIO.combine(Constants.DECRYPTED_PATH_FULL,
+                        fileAccessInfo.filePath);
+                permissionHandler.writeToFile(fileAccessInfo);
+                break;
+            default:
+                Toast.makeText(this, "Shouldn't be here", Toast.LENGTH_SHORT).show();
         }
     }
 }

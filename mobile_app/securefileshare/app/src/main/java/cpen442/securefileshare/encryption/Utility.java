@@ -26,7 +26,7 @@ public class Utility {
 
     public static byte[] toBytes(String base64) {
         byte[] data = base64.getBytes(StandardCharsets.UTF_8);
-        byte[] retval = Base64.decode(data, Base64.NO_WRAP);
+        byte[] retval = Base64.decode(data, Base64.NO_WRAP | Base64.URL_SAFE);
         return retval;
     }
 

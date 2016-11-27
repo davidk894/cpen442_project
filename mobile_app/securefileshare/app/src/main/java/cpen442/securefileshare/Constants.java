@@ -1,10 +1,37 @@
 package cpen442.securefileshare;
 
+import android.os.Environment;
+
+import cpen442.securefileshare.encryption.FileIO;
+
 public class Constants {
     public static final String DIALOG_FRAGMENT_TAG = "myFragment";
     public static final String FB_RECEIVER_INTENT_FILTER = "FBMessage";
     public static final String SMS_INBOX = "content://sms/inbox";
     public static final String JOBS_LIST_JSON = "JOBS_LIST_JSON";
+
+
+    //Directories
+    public static String EXTERNAL_STORAGE_DIRECTORY = Environment.getExternalStorageDirectory().toString();
+
+    public static final String SECURE_FILE_SHARE_DIRECTORY = "SecureFileShare";
+    public static final String ENCRYPTED_DIRECTORY = "Encypted";
+    public static final String TO_DECRYPT_DIRECTORY = "ToDecrypt";
+    public static final String DECRYPTED_DIRECTORY = "Decrypted";
+    public static final String ENCRYPTED_FILE_EXTENTION = ".crypt";
+
+    public static String TO_DECRYPT_PATH_FULL = FileIO.combine(
+            FileIO.combine(Constants.EXTERNAL_STORAGE_DIRECTORY,
+                    Constants.SECURE_FILE_SHARE_DIRECTORY),
+            Constants.TO_DECRYPT_DIRECTORY);
+    public static String DECRYPTED_PATH_FULL = FileIO.combine(
+            FileIO.combine(Constants.EXTERNAL_STORAGE_DIRECTORY,
+                    Constants.SECURE_FILE_SHARE_DIRECTORY),
+            Constants.DECRYPTED_DIRECTORY);
+    public static String ENCRYPTED_PATH_FULL = FileIO.combine(
+            FileIO.combine(Constants.EXTERNAL_STORAGE_DIRECTORY,
+                    Constants.SECURE_FILE_SHARE_DIRECTORY),
+            Constants.ENCRYPTED_DIRECTORY);
 
     // Request list actions
     public static final int APPROVE_REQUEST = 0;
