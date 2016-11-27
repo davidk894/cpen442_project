@@ -1,5 +1,7 @@
 package cpen442.securefileshare;
 
+import android.net.Uri;
+
 /**
  * Created by Cyberus on 2016-11-21.
  */
@@ -7,18 +9,23 @@ package cpen442.securefileshare;
 
 public class FileAccessPermission {
     public String filePath;
+    public Uri fileUri;
     public byte[] fileData;
     public byte[] key;
     public String targetID;
     public Purpose purpose;
+    public Stage stage;
+
     public enum Purpose {
-        Encrypt_read,
-        Encrypt_write,
-        Decrypt_read,
-        toDecrypt_write,
-        toDecrypt_read,
-        Decrypt_write
+        Encrypt,
+        Decrypt
     }
+    public enum Stage {
+        ConvertPath,
+        Read,
+        Write
+    }
+
 
     public FileAccessPermission() {}
 }
