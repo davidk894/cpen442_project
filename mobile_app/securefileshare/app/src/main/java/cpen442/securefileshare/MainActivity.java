@@ -106,18 +106,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    public void testFunction(View v) {
-        SharedPreferences.Editor editor = mSharedPreferences.edit();
-        editor.remove(Constants.SHARED_PREF_USER_ID);
-        editor.remove(Constants.SHARED_PREF_FP_SECRET);
-        editor.commit();
-        System.out.println("Removed shared prefs");
-        if(KeyStoreInterface.keyExists()) {
-            KeyStoreInterface.removeKey();
-            System.out.println("Removed key");
-        }
-    }
-
     // Permissions
     @Override
     public void onRequestPermissionsResult(int requestCode,

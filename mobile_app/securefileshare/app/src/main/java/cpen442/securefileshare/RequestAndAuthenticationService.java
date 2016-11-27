@@ -20,6 +20,7 @@ public class RequestAndAuthenticationService {
     private boolean mDoJob;
     private SharedPreferences mSharedPreferences;
     private String mFpSecret;
+    private FingerprintAuthenticationDialogFragment mFragment;
 
     public static RequestAndAuthenticationService instance = new RequestAndAuthenticationService();
 
@@ -35,23 +36,31 @@ public class RequestAndAuthenticationService {
     public void setCipherMode(int cipherMode) {
         mCipherMode = cipherMode;
     }
+
     public boolean getDoJob() {
         return mDoJob;
     }
     public void setDoJob(boolean doJob) {
         mDoJob = doJob;
     }
+
     public SharedPreferences getSharedPreferences() {
         return mSharedPreferences;
     }
     public void setSharedPreferences(SharedPreferences sharedPreferences) {
         mSharedPreferences = sharedPreferences;
     }
+
     public String getFpSecret() {
         return mFpSecret;
     }
     public void setFpSecret(String fpSecret) {
         mFpSecret = fpSecret;
+    }
+
+    public FingerprintAuthenticationDialogFragment getFragment() { return mFragment; }
+    public void setFragment(FingerprintAuthenticationDialogFragment fragment) {
+        mFragment = fragment;
     }
 
     public void makeRequest(final Context context, String requestURL, JSONObject requestParams) {
@@ -87,16 +96,18 @@ public class RequestAndAuthenticationService {
         Cipher cipher = KeyStoreInterface.cipherInit(mCipherMode);
         FingerprintManager.CryptoObject cryptoObject = new FingerprintManager.CryptoObject(cipher);
 
-        FingerprintAuthenticationDialogFragment fragment = new FingerprintAuthenticationDialogFragment();
-        fragment.setCryptoObject(cryptoObject);
+        mFragment = new FingerprintAuthenticationDialogFragment();
+        mFragment.setCryptoObject(cryptoObject);
 
-        fragment.show(context.getFragmentManager(), Constants.DIALOG_FRAGMENT_TAG);
+        mFragment.show(context.getFragmentManager(), Constants.DIALOG_FRAGMENT_TAG);
     }
 
     public void onAuthenticated(Context context, String smsSecret, boolean withFingerprint,
                                 @Nullable FingerprintManager.CryptoObject cryptoObject) {
         assert(mJobId != null);
         assert(cryptoObject != null);
+
+        mFragment = null;
 
         String encryptedFPSecret = mSharedPreferences.getString(
                 Constants.SHARED_PREF_FP_SECRET, null);
