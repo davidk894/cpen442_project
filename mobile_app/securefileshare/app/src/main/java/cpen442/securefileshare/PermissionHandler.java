@@ -61,7 +61,7 @@ public class PermissionHandler {
         }
         File dir = new File( new File(fInfo.filePath).getParent() );
         if (!dir.isDirectory()) {
-            if(!dir.mkdir()){
+            if(!recursiveMcdir(dir)){
                 Toast.makeText(activity, "Could not make dir", Toast.LENGTH_SHORT).show();
                 return false;
             }
@@ -70,6 +70,32 @@ public class PermissionHandler {
             FileIO.WriteAllBytes(fInfo.filePath, fInfo.fileData);
         } catch (IOException e) {
             Toast.makeText(activity, "Error writing to file", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        return true;
+    }
+
+    private boolean recursiveMcdir(File dir) {
+        if (!dir.mkdir()){
+            recursiveMcdir(new File(dir.getParent()));
+            if(dir.mkdir()){
+                return true;
+            }
+            return false;
+        }
+        return true;
+    }
+
+    //Returns true if you have the permission
+    public boolean checkAndRequestPermission(String[] permissions, Object permissionArgs){
+        if (ContextCompat.checkSelfPermission(activity,
+                android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            permissionMap.put(PermissionNumber, permissionArgs);
+            activity.requestPermissions(new String[]{
+                    android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+            }, PermissionNumber);
+            PermissionNumber++;
             return false;
         }
         return true;

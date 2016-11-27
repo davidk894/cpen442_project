@@ -194,69 +194,100 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void handleFileAccessPermissionResult(FileAccessPermission fileAccessInfo) {
-        switch (fileAccessInfo.purpose) {
-            case Encrypt_read:
-                if (!permissionHandler.readFile(fileAccessInfo)) {
-                    return;
-                }
-                try {
-                    String userId = mSharedPreferences.getString(
-                            Constants.SHARED_PREF_USER_ID, null);
-                    if (userId == null){
-                        Toast.makeText(this, "Invalid User ID", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    EncryptedPlusKey EPK = FileEncyrption.EncryptFile(fileAccessInfo.filePath, fileAccessInfo.fileData, userId);
-                    fileAccessInfo.fileData = EPK.encryptedFile.toBytes();
+        switch (fileAccessInfo.purpose){
+            case Encrypt: {
+                switch (fileAccessInfo.stage)
+                {
+                    case ConvertPath:
+                        if (!convertPathHelper(fileAccessInfo)){
+                            return;
+                        }
+                    case Read:
+                        if (!permissionHandler.readFile(fileAccessInfo)) {
+                            return;
+                        }
+                        String userId = mSharedPreferences.getString(
+                                Constants.SHARED_PREF_USER_ID, null);
+                        if (userId == null) {
+                            Toast.makeText(this, "Invalid User ID", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        try {
+                            EncryptedPlusKey EPK = FileEncyrption.EncryptFile(fileAccessInfo.filePath, fileAccessInfo.fileData, userId);
+                            fileAccessInfo.fileData = EPK.encryptedFile.toBytes();
 
-                    Toast.makeText(this, "Encrypted", Toast.LENGTH_SHORT).show();
-                    byte[] fileHash = HashByteWrapper.computeHash(fileAccessInfo.fileData);
+                            Toast.makeText(this, "Encrypted", Toast.LENGTH_SHORT).show();
+                            byte[] fileHash = HashByteWrapper.computeHash(fileAccessInfo.fileData);
 
-                    addKeyRequest(fileHash, EPK.key);
-                    Toast.makeText(this, "Sent Key", Toast.LENGTH_SHORT).show();
+                            addKeyRequest(fileHash, EPK.key);
+                            Toast.makeText(this, "Sent Key", Toast.LENGTH_SHORT).show();
 
-                } catch (EncryptionException e) {
-                    Toast.makeText(this, "Encryption Failed", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                fileAccessInfo.filePath = FileIO.combine(Constants.ENCRYPTED_PATH_FULL,
-                        new File(fileAccessInfo.filePath).getName().toString()
-                                + Constants.ENCRYPTED_FILE_EXTENTION);
-                fileAccessInfo.purpose = FileAccessPermission.Purpose.Encrypt_write;
-                //Fallthrough
-            case Encrypt_write:
-                if (!permissionHandler.writeToFile(fileAccessInfo)) {
-                    return;
+                        } catch (EncryptionException e) {
+                            Toast.makeText(this, "Encryption Failed", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        fileAccessInfo.filePath = FileIO.combine(Constants.ENCRYPTED_PATH_FULL,
+                                new File(fileAccessInfo.filePath).getName().toString()
+                                        + Constants.ENCRYPTED_FILE_EXTENTION);
+                        fileAccessInfo.stage = FileAccessPermission.Stage.Write;
+                    case Write:
+                        if (!permissionHandler.writeToFile(fileAccessInfo)) {
+                            return;
+                        }
                 }
                 break;
-            case Decrypt_read:
-                if (!permissionHandler.readFile(fileAccessInfo)) {
-                    return;
-                }
+            }
+            case Decrypt: {
+                switch (fileAccessInfo.stage) {
+                    case ConvertPath:
+                        if (!convertPathHelper(fileAccessInfo)) {
+                            return;
+                        }
+                    case Read:
+                        if (!permissionHandler.readFile(fileAccessInfo)) {
+                            return;
+                        }
 
-                byte [] fileHash = HashByteWrapper.computeHash(fileAccessInfo.fileData);
-                String newFileName = Utility.toBase64String(fileHash)
-                        + Constants.ENCRYPTED_FILE_EXTENTION;
-                try {
-                    fileAccessInfo.targetID = new EncryptedFileFormat(fileAccessInfo.fileData).getUserId();
-                } catch (FormatException e) {
-                    Toast.makeText(this, "File Format Exception", Toast.LENGTH_SHORT).show();
-                    return;
-                }
+                        byte[] fileHash = HashByteWrapper.computeHash(fileAccessInfo.fileData);
+                        String newFileName = Utility.toBase64String(fileHash)
+                                + Constants.ENCRYPTED_FILE_EXTENTION;
+                        try {
+                            fileAccessInfo.targetID = new EncryptedFileFormat(fileAccessInfo.fileData).getUserId();
+                        } catch (FormatException e) {
+                            Toast.makeText(this, "File Format Exception", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
 
-                fileAccessInfo.filePath = FileIO.combine(Constants.TO_DECRYPT_PATH_FULL, newFileName);
-                fileAccessInfo.purpose = FileAccessPermission.Purpose.toDecrypt_write;
-            case toDecrypt_write:
-                if (!permissionHandler.writeToFile(fileAccessInfo)) {
-                    return;
+                        fileAccessInfo.filePath = FileIO.combine(Constants.TO_DECRYPT_PATH_FULL, newFileName);
+                        fileAccessInfo.stage = FileAccessPermission.Stage.Write;
+                    case Write:
+                        if (!permissionHandler.writeToFile(fileAccessInfo)) {
+                            return;
+                        }
+                        fileHash = HashByteWrapper.computeHash(fileAccessInfo.fileData);
+                        requestKey(fileAccessInfo.targetID, fileHash);
                 }
-                fileHash = HashByteWrapper.computeHash(fileAccessInfo.fileData);
-                requestKey(fileAccessInfo.targetID, fileHash);
                 break;
-            default:
-                Toast.makeText(this, "Shouldn't be here", Toast.LENGTH_SHORT).show();
+            }
         }
     }
+
+    private boolean convertPathHelper(FileAccessPermission fInfo){
+        boolean havePermission = permissionHandler.checkAndRequestPermission(new String[]{
+                        Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE },
+                        fInfo);
+        if (havePermission) {
+            fInfo.filePath = PathConverter.getPath(this, fInfo.fileUri);
+            fInfo.stage = FileAccessPermission.Stage.Read;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+
     //Adds key
     public void addKeyRequest(byte[] fileHash, byte[] key) {
         JSONObject requestParams = new JSONObject();
@@ -322,19 +353,15 @@ public class MainActivity extends AppCompatActivity
             }
         } else {
             if (resultCode == RESULT_OK) {
-                Uri fileUri = data.getData();
-                String filePath = PathConverter.getPath(this, fileUri);
+                FileAccessPermission fInfo = new FileAccessPermission();
+                fInfo.fileUri = data.getData(); // path converter required
                 if (requestCode == Constants.FILE_CHOOSER_ENCRYPT) {
-                    FileAccessPermission fInfo = new FileAccessPermission();
-                    fInfo.purpose = FileAccessPermission.Purpose.Encrypt_read;
-                    fInfo.filePath = filePath;
-                    handleFileAccessPermissionResult(fInfo);
+                    fInfo.purpose = FileAccessPermission.Purpose.Encrypt;
                 } else if (requestCode == Constants.FILE_CHOOSER_DECRYPT) {
-                    FileAccessPermission fInfo = new FileAccessPermission();
-                    fInfo.purpose = FileAccessPermission.Purpose.Decrypt_read;
-                    fInfo.filePath = filePath;
-                    handleFileAccessPermissionResult(fInfo);
+                    fInfo.purpose = FileAccessPermission.Purpose.Decrypt;
                 }
+                fInfo.stage = FileAccessPermission.Stage.ConvertPath;
+                handleFileAccessPermissionResult(fInfo);
             }
         }
     }

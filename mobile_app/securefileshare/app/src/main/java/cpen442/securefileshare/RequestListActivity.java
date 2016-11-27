@@ -252,7 +252,7 @@ public class RequestListActivity extends ListActivity
                     String fileName = fileHash + Constants.ENCRYPTED_FILE_EXTENTION;
                     fileAccessPermission.filePath = FileIO.combine(Constants.TO_DECRYPT_PATH_FULL,
                             fileName);
-                    fileAccessPermission.purpose = FileAccessPermission.Purpose.toDecrypt_read;
+                    fileAccessPermission.stage = FileAccessPermission.Stage.Read;
                     handleFileAccessPermissionResult(fileAccessPermission);
 
                     jobToRemoveFromList = null;
@@ -350,8 +350,8 @@ public class RequestListActivity extends ListActivity
     }
 
     public void handleFileAccessPermissionResult(FileAccessPermission fileAccessInfo) {
-        switch (fileAccessInfo.purpose) {
-            case toDecrypt_read:
+        switch (fileAccessInfo.stage) {
+            case Read:
                 if (!permissionHandler.readFile(fileAccessInfo)) {
                     return;
                 }
@@ -368,11 +368,12 @@ public class RequestListActivity extends ListActivity
                     Toast.makeText(this, "File Format Exception", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                fileAccessInfo.purpose = FileAccessPermission.Purpose.Decrypt_write;
-            case Decrypt_write:
+                fileAccessInfo.stage = FileAccessPermission.Stage.Write;
+            case Write:
                 fileAccessInfo.filePath = FileIO.combine(Constants.DECRYPTED_PATH_FULL,
                         fileAccessInfo.filePath);
                 permissionHandler.writeToFile(fileAccessInfo);
+                Toast.makeText(this, "File Decrypted", Toast.LENGTH_SHORT).show();
                 break;
             default:
                 Toast.makeText(this, "Shouldn't be here", Toast.LENGTH_SHORT).show();
