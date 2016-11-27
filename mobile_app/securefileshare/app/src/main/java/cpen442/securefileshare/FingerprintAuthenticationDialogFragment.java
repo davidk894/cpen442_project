@@ -4,10 +4,6 @@ import android.app.DialogFragment;
 import android.content.Context;
 import android.hardware.fingerprint.FingerprintManager;
 import android.os.Bundle;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.content.PermissionChecker;
-import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -118,15 +114,8 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
         // Uhoh spaghetti-o
     }
 
-    public void readSMSSecret() {
-        if (ContextCompat.checkSelfPermission(mContext, android.Manifest.permission.READ_SMS)
-                != PermissionChecker.PERMISSION_GRANTED) {
-            // Request permissions
-            ActivityCompat.requestPermissions((AppCompatActivity)mContext,
-                    new String[]{android.Manifest.permission.READ_SMS},
-                    Constants.PERMISSION_READ_SMS);
-        } else {
-            // Already have permissions now we need to read sms..
-        }
+    public void setSMSSecret(String secret) {
+        EditText smsSecretField = (EditText) mView.findViewById(R.id.sms_field);
+        smsSecretField.setText(secret);
     }
 }

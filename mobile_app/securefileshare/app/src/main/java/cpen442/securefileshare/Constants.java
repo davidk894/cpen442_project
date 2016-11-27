@@ -3,8 +3,8 @@ package cpen442.securefileshare;
 public class Constants {
     public static final String DIALOG_FRAGMENT_TAG = "myFragment";
     public static final String FB_RECEIVER_INTENT_FILTER = "FBMessage";
-    public static final String SMS_INBOX = "content://sms/inbox";
     public static final String JOBS_LIST_JSON = "JOBS_LIST_JSON";
+    public static final String SMS_SECRET_SENDER_NUMBER = "+16505556789";
 
     // Request list actions
     public static final int APPROVE_REQUEST = 0;

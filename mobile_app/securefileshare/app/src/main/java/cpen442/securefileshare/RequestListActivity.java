@@ -128,6 +128,7 @@ public class RequestListActivity extends ListActivity
                .setItems(listOfItems, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                doJob = true;
                 if(which == Constants.DECLINE_REQUEST) {
                     doJob = false;
                 }
@@ -192,6 +193,7 @@ public class RequestListActivity extends ListActivity
                 e.printStackTrace();
             }
             jobToRemoveFromList = item;
+            doJob = true;
 
             RequestAndAuthenticationService service =
                     RequestAndAuthenticationService.getInstance();

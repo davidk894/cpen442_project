@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_main"
     android:layout_width="match_parent"
@@ -11,43 +12,31 @@
     tools:context="cpen442.securefileshare.MainActivity">
 
     <Button
+        android:text="Encrypt"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/btn_encrypt"
+        android:onClick="encryptBtnClick"
+        android:layout_below="@+id/logo2"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="44dp" />
+
+    <Button
         android:text="Decrypt"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/btn_decrypt"
-        android:layout_centerVertical="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:onClick="decryptBtnClick" />
+        android:onClick="decryptBtnClick"
+        android:layout_below="@+id/btn_encrypt"
+        android:layout_alignParentStart="true" />
 
     <Button
         android:text="Request List"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/btn_viewlist"
-        android:layout_alignTop="@+id/btn_decrypt"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_marginTop="45dp"
-        android:onClick="reqListBtnClick" />
+        android:onClick="reqListBtnClick"
+        android:layout_below="@+id/btn_decrypt"
+        android:layout_alignParentStart="true" />
 
-    <Button
-        android:text="Encrypt"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/btn_encrypt"
-        android:layout_above="@+id/btn_decrypt"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:onClick="encryptBtnClick" />
-
-    <Button
-        android:text="testbutton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:id="@+id/testbutton"
-        android:onClick="testFunction"
-        android:layout_below="@+id/btn_viewlist"
-        android:layout_centerHorizontal="true" />
 </RelativeLayout>

@@ -1,5 +1,7 @@
 package cpen442.securefileshare;
 
+import android.*;
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -23,7 +25,7 @@ import org.json.JSONObject;
 import javax.crypto.Cipher;
 
 public class CreateAccountActivity extends Activity
-        implements RequestAndAuthenticationService.IAuthenticatable{
+        implements RequestAndAuthenticationService.IAuthenticatable, SMSReceiver.SMSListener {
 
     private SharedPreferences mSharedPreferences;
     private String mFpSecret;
@@ -35,6 +37,7 @@ public class CreateAccountActivity extends Activity
         setContentView(R.layout.activity_create_account);
 
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        SMSReceiver.bindListener(this);
     }
 
     @Override
@@ -56,10 +59,20 @@ public class CreateAccountActivity extends Activity
 
     // Create account
     public void createAccount() {
-        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_PHONE_STATE)
-                != PermissionChecker.PERMISSION_GRANTED) {
+        int permission_phone_num = ContextCompat.
+                checkSelfPermission(this, android.Manifest.permission.READ_PHONE_STATE);
+        int permission_read_sms = ContextCompat.
+                checkSelfPermission(this, Manifest.permission.READ_SMS);
+        int permission_recv_sms = ContextCompat.
+                checkSelfPermission(this, Manifest.permission.RECEIVE_SMS);
+
+        if(permission_phone_num != PermissionChecker.PERMISSION_GRANTED ||
+                permission_read_sms != PermissionChecker.PERMISSION_GRANTED ||
+                permission_recv_sms != PermissionChecker.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
-                    new String[]{android.Manifest.permission.READ_PHONE_STATE},
+                    new String[]{android.Manifest.permission.READ_PHONE_STATE,
+                            android.Manifest.permission.READ_SMS,
+                            android.Manifest.permission.RECEIVE_SMS},
                     Constants.PERMISSION_READ_PHONE_STATE);
         } else {
             JSONObject reqParams = new JSONObject();
@@ -87,6 +100,16 @@ public class CreateAccountActivity extends Activity
         service.setFpSecret(mFpSecret);
         service.setSharedPreferences(mSharedPreferences);
         service.makeRequest(this, Constants.CREATE_ACCOUNT_URL, requestParams);
+    }
+
+    @Override
+    public void messageReceived(String message) {
+        RequestAndAuthenticationService service = RequestAndAuthenticationService.getInstance();
+        FingerprintAuthenticationDialogFragment fragment = service.getFragment();
+        if(fragment != null) {
+            fragment.setSMSSecret(message);
+            // Set the SMS Secret
+        }
     }
 
     @Override
