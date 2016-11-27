@@ -122,71 +122,73 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
-        if(grantResults.length == permissions.length) {
-            int i;
-            switch (i = permissions.length) {
-                case 1: {
-                    switch (permissions[i]) {
-                        case Manifest.permission.READ_PHONE_STATE: {
-                            if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+        if(permissions != null || grantResults != null) {
+            if (grantResults.length == permissions.length) {
+                int i = 0;
+                switch (i = permissions.length) {
+                    case 1: {
+                        switch (permissions[i]) {
+                            case Manifest.permission.READ_PHONE_STATE: {
+                                if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
 
-                            } else {
+                                } else {
+
+                                }
+                                break;
+                            }
+                            case Manifest.permission.READ_SMS: {
+                                if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+
+                                } else {
+
+                                }
+                                break;
+                            }
+                            case Manifest.permission.READ_EXTERNAL_STORAGE: {
+                                if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                                    handleFileAccessPermissionResult((FileAccessPermission) permissionHandler.get(requestCode));
+                                } else {
+
+                                }
+                                break;
+                            }
+                            case Manifest.permission.WRITE_EXTERNAL_STORAGE: {
+                                if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                                    handleFileAccessPermissionResult((FileAccessPermission) permissionHandler.get(requestCode));
+                                } else {
+
+                                }
+                                break;
+                            }
+                            default: {
 
                             }
-                            break;
                         }
-                        case Manifest.permission.READ_SMS: {
-                            if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
-
-                            } else {
-
+                    }
+                    case 2: {
+                        boolean allGranted = true;
+                        for (int g : grantResults) {
+                            if (g != PackageManager.PERMISSION_GRANTED) {
+                                allGranted = false;
                             }
-                            break;
                         }
-                        case Manifest.permission.READ_EXTERNAL_STORAGE: {
-                            if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                        if (allGranted) {
+                            boolean isFileAccess = true;
+                            for (String p : permissions) {
+                                if (p != Manifest.permission.WRITE_EXTERNAL_STORAGE
+                                        || p != Manifest.permission.READ_EXTERNAL_STORAGE) {
+                                    isFileAccess = false;
+                                }
+                            }
+                            if (isFileAccess) {
                                 handleFileAccessPermissionResult((FileAccessPermission) permissionHandler.get(requestCode));
-                            } else {
-
-                            }
-                            break;
-                        }
-                        case Manifest.permission.WRITE_EXTERNAL_STORAGE: {
-                            if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
-                                handleFileAccessPermissionResult((FileAccessPermission) permissionHandler.get(requestCode));
-                            } else {
-
-                            }
-                            break;
-                        }
-                        default: {
-
-                        }
-                    }
-                }
-                case 2: {
-                    boolean allGranted = true;
-                    for (int g : grantResults) {
-                        if (g != PackageManager.PERMISSION_GRANTED) {
-                            allGranted = false;
-                        }
-                    }
-                    if (allGranted){
-                        boolean isFileAccess = true;
-                        for (String p : permissions){
-                            if (p != Manifest.permission.WRITE_EXTERNAL_STORAGE
-                                    || p != Manifest.permission.READ_EXTERNAL_STORAGE) {
-                                isFileAccess = false;
                             }
                         }
-                        if (isFileAccess) {
-                            handleFileAccessPermissionResult((FileAccessPermission) permissionHandler.get(requestCode));
-                        }
-                    }
 
-                }
-                default: {
-                    // do nothing
+                    }
+                    default: {
+                        // do nothing
+                    }
                 }
             }
         }

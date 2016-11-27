@@ -52,7 +52,7 @@ public class Constants {
     public static final int JOB_REQUEST_KEY = 4;
     public static final int JOB_ADD_KEY = 5;
     public static final int JOB_DELETE_KEY = 6;
-    public static final int JOB_GET_KEYS = 7;
+    public static final int JOB_GET_KEY = 7;
     public static final int JOB_PENDING_RESPONSE = 8;
     public static final int JOB_PENDING_REQUEST = 9;
     public static final int JOB_GOT_KEY = 10;
