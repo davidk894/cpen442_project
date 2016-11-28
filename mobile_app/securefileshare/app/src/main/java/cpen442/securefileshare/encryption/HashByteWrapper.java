@@ -20,7 +20,7 @@ public class HashByteWrapper {
 
     public HashByteWrapper(byte[] allBytes) {
         hash = Arrays.copyOf(allBytes, LENGTH_OF_HASH);
-        data = Arrays.copyOfRange(allBytes, LENGTH_OF_HASH, allBytes.length - hash.length);
+        data = Arrays.copyOfRange(allBytes, LENGTH_OF_HASH, allBytes.length);
     }
 
     public boolean doesHashMatch() {
