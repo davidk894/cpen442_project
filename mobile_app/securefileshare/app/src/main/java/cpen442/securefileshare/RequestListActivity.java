@@ -295,6 +295,7 @@ public class RequestListActivity extends ListActivity
             int i;
             switch (i = permissions.length) {
                 case 1: {
+                    i = 0;
                     switch (permissions[i]) {
                         case android.Manifest.permission.READ_PHONE_STATE: {
                             if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
