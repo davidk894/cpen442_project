@@ -54,7 +54,8 @@ public class Encryption {
             byte[] encrypted = transform(unencrypted, key, IV, Cipher.ENCRYPT_MODE);
             byte[] ivPlusEncrypted = new byte[IV.length + encrypted.length];
             System.arraycopy(IV, 0, ivPlusEncrypted, 0, IV.length);
-            System.arraycopy(encrypted, 0, ivPlusEncrypted, IV.length, ivPlusEncrypted.length);
+            System.arraycopy(encrypted, 0, ivPlusEncrypted, IV.length, encrypted.length);
+            return ivPlusEncrypted;
         } catch (BadPaddingException e) {
             e.printStackTrace();
         } catch (IllegalBlockSizeException e) {

@@ -20,6 +20,9 @@ public class EncryptionWrapper {
         } catch (InvalidKeyException e) {
             throw new EncryptionException("Invalid Key", e);
         }
+        if (toReturn == null){
+            throw new EncryptionException("Encyption Failed with null");
+        }
         return toReturn;
     }
 
