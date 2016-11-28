@@ -11,13 +11,12 @@ public class EncryptionWrapper {
     public static byte[] encrypt(byte[] data, SecretKey key) throws EncryptionException {
         byte[] IV = Encryption.generateIV();
         byte[] hash = HashByteWrapper.computeHash(data);
-        byte[] toEncrypt = new byte[IV.length + hash.length + data.length];
-        System.arraycopy(IV, 0, toEncrypt, 0, IV.length);
-        System.arraycopy(hash, 0, toEncrypt, IV.length, hash.length);
-        System.arraycopy(data, 0, toEncrypt, IV.length + hash.length, data.length);
+        byte[] toEncrypt = new byte[hash.length + data.length];
+        System.arraycopy(hash, 0, toEncrypt, 0, hash.length);
+        System.arraycopy(data, 0, toEncrypt, hash.length, data.length);
         byte[] toReturn;
         try {
-            toReturn = Encryption.encrypt(toEncrypt, key, IV);
+            toReturn = Encryption.encrypt(toEncrypt, key);
         } catch (InvalidKeyException e) {
             throw new EncryptionException("Invalid Key", e);
         }
