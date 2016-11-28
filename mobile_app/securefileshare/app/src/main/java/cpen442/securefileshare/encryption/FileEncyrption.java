@@ -23,7 +23,8 @@ public class FileEncyrption {
     }
 
     public static FileFormat DecryptFile(byte[] encryptedFileBytes, byte[] key) throws EncryptionException, FormatException {
-        byte[] decryptedBytes = EncryptionWrapper.decrypt(encryptedFileBytes, Encryption.toKey(key));
+        EncryptedFileFormat eff = new EncryptedFileFormat(encryptedFileBytes);
+        byte[] decryptedBytes = EncryptionWrapper.decrypt(eff.getEncryptedData(), Encryption.toKey(key));
         return new FileFormat(decryptedBytes);
     }
 }

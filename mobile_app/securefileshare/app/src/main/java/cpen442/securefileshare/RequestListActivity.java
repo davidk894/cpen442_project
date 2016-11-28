@@ -369,8 +369,7 @@ public class RequestListActivity extends ListActivity
                     return;
                 }
                 try {
-                    EncryptedFileFormat eff = new EncryptedFileFormat(fileAccessInfo.fileData);
-                    FileFormat ff = FileEncyrption.DecryptFile(eff.getEncryptedData(),
+                    FileFormat ff = FileEncyrption.DecryptFile(fileAccessInfo.fileData,
                             fileAccessInfo.key);
                     fileAccessInfo.fileData = ff.GetFileBytes();
                     fileAccessInfo.filePath = ff.getFileName();

@@ -113,9 +113,9 @@ public class MainActivity extends AppCompatActivity
                                            String permissions[], int[] grantResults) {
         if(permissions != null || grantResults != null) {
             if (grantResults.length == permissions.length) {
-                int i = 0;
-                switch (i = permissions.length) {
+                switch (permissions.length) {
                     case 1: {
+                        int i = 0;
                         switch (permissions[i]) {
                             case Manifest.permission.READ_PHONE_STATE: {
                                 if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
