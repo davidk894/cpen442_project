@@ -35,7 +35,7 @@ public class RequestListAdapter extends ArrayAdapter<Job> {
             TextView contactNumberField = (TextView) v.findViewById(R.id.list_item_contact_number_field);
             TextView fileHashItem = (TextView) v.findViewById(R.id.list_item_file_hash_field);
 
-            userNameField.setText(item.getName());
+                userNameField.setText(item.getName());
             contactNumberField.setText(item.getContactNumber());
             fileHashItem.setText(item.getFileHash());
 

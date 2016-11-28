@@ -8,8 +8,6 @@ public class Constants {
     public static final String DIALOG_FRAGMENT_TAG = "myFragment";
     public static final String FB_RECEIVER_INTENT_FILTER = "FBMessage";
     public static final String JOBS_LIST_JSON = "JOBS_LIST_JSON";
-//    public static final String SMS_SECRET_SENDER_NUMBER = "+16505556789";
-    public static final String SMS_SECRET_SENDER_NUMBER = "2028529126";
 
     //Directories
     public static String EXTERNAL_STORAGE_DIRECTORY = Environment.getExternalStorageDirectory().toString();

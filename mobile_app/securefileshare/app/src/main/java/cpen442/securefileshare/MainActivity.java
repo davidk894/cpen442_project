@@ -390,7 +390,6 @@ public class MainActivity extends AppCompatActivity
         FingerprintAuthenticationDialogFragment fragment = service.getFragment();
         if(fragment != null) {
             fragment.setSMSSecret(message);
-            // Set the SMS Secret
         }
     }
 

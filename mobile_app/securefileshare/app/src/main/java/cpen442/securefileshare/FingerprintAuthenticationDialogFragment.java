@@ -111,11 +111,12 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
 
     @Override
     public void onError() {
-        // Uhoh spaghetti-o
     }
 
     public void setSMSSecret(String secret) {
         EditText smsSecretField = (EditText) mView.findViewById(R.id.sms_field);
-        smsSecretField.setText(secret);
+        if(smsSecretField != null) {
+            smsSecretField.setText(secret);
+        }
     }
 }

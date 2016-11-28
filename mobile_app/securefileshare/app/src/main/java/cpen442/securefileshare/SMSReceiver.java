@@ -25,19 +25,17 @@ public class SMSReceiver extends BroadcastReceiver {
             String phoneNumber = smsMessage.getDisplayOriginatingAddress();
             String senderNum = phoneNumber;
             String messageBody = smsMessage.getMessageBody();
-            if (phoneNumber.equals(Constants.SMS_SECRET_SENDER_NUMBER)) {
-                try
-                {
-                    if(messageBody != null){
-                        Matcher m = p.matcher(messageBody);
-                        if(m.matches()) {
-                            mListener.messageReceived(m.group(2));
-                        }
+            try
+            {
+                if(messageBody != null){
+                    Matcher m = p.matcher(messageBody);
+                    if(m.matches()) {
+                        mListener.messageReceived(m.group(2));
                     }
                 }
-                catch(Exception e){
-                    e.printStackTrace();
-                }
+            }
+            catch(Exception e){
+                e.printStackTrace();
             }
         }
     }
