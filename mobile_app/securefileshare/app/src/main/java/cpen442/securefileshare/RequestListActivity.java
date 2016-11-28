@@ -244,10 +244,11 @@ public class RequestListActivity extends ListActivity
                     }
                     break;
                 }
-                case Constants.JOB_GOT_KEY: {
+                case Constants.JOB_GET_KEY: {
+                    Toast.makeText(this, "Test: Job got key", Toast.LENGTH_LONG).show();
                     JSONObject information = response.getJSONObject("information");
-                    String key = response.getString("key");
-                    String fileHash = response.getString("fileHash");
+                    String key = information.getString("key");
+                    String fileHash = information.getString("fileHash");
                     //Decrypt
                     FileAccessPermission fileAccessPermission = new FileAccessPermission();
                     fileAccessPermission.key = Utility.toBytes(key);

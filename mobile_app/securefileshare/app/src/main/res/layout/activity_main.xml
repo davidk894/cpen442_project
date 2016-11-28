@@ -11,15 +11,22 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="cpen442.securefileshare.MainActivity">
 
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:srcCompat="@drawable/logo"
+        android:id="@+id/imageView5"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+
     <Button
         android:text="Encrypt"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/btn_encrypt"
         android:onClick="encryptBtnClick"
-        android:layout_below="@+id/logo2"
-        android:layout_alignParentStart="true"
-        android:layout_marginTop="44dp" />
+        android:layout_above="@+id/btn_decrypt"
+        android:layout_alignParentStart="true" />
 
     <Button
         android:text="Decrypt"
@@ -27,7 +34,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/btn_decrypt"
         android:onClick="decryptBtnClick"
-        android:layout_below="@+id/btn_encrypt"
+        android:layout_above="@+id/btn_viewlist"
         android:layout_alignParentStart="true" />
 
     <Button
@@ -36,7 +43,8 @@
         android:layout_height="wrap_content"
         android:id="@+id/btn_viewlist"
         android:onClick="reqListBtnClick"
-        android:layout_below="@+id/btn_decrypt"
+        android:layout_marginBottom="70dp"
+        android:layout_alignParentBottom="true"
         android:layout_alignParentStart="true" />
 
 </RelativeLayout>
