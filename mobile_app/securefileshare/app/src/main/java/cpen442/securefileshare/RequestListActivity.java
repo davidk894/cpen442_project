@@ -40,7 +40,7 @@ import cpen442.securefileshare.encryption.HashByteWrapper;
 import cpen442.securefileshare.encryption.Utility;
 
 public class RequestListActivity extends ListActivity
-        implements RequestAndAuthenticationService.IAuthenticatable{
+        implements RequestAndAuthenticationService.IAuthenticatable, SMSReceiver.SMSListener {
 
     private SharedPreferences mSharedPreferences;
     private BroadcastReceiver fbReceiver;
@@ -57,7 +57,7 @@ public class RequestListActivity extends ListActivity
         setContentView(R.layout.activity_req_list);
 
         permissionHandler = new PermissionHandler(this);
-
+        SMSReceiver.bindListener(this);
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         fbReceiver = new FBReceiver();
@@ -274,6 +274,16 @@ public class RequestListActivity extends ListActivity
             }
         } catch (JSONException e) {
             e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void messageReceived(String message) {
+        RequestAndAuthenticationService service = RequestAndAuthenticationService.getInstance();
+        FingerprintAuthenticationDialogFragment fragment = service.getFragment();
+        if(fragment != null) {
+            fragment.setSMSSecret(message);
+            // Set the SMS Secret
         }
     }
 

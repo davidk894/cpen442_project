@@ -38,7 +38,7 @@ import cpen442.securefileshare.encryption.Utility;
 
 
 public class MainActivity extends AppCompatActivity
-        implements RequestAndAuthenticationService.IAuthenticatable {
+        implements RequestAndAuthenticationService.IAuthenticatable, SMSReceiver.SMSListener {
 
     private SharedPreferences mSharedPreferences;
     private BroadcastReceiver fbReceiver;
@@ -54,6 +54,7 @@ public class MainActivity extends AppCompatActivity
 
         permissionHandler = new PermissionHandler(this);
 
+        SMSReceiver.bindListener(this);
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         fbReceiver = new FBReceiver();
         registerReceiver(fbReceiver, new IntentFilter(Constants.FB_RECEIVER_INTENT_FILTER));
@@ -380,6 +381,16 @@ public class MainActivity extends AppCompatActivity
             }
         } catch (JSONException e) {
             e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void messageReceived(String message) {
+        RequestAndAuthenticationService service = RequestAndAuthenticationService.getInstance();
+        FingerprintAuthenticationDialogFragment fragment = service.getFragment();
+        if(fragment != null) {
+            fragment.setSMSSecret(message);
+            // Set the SMS Secret
         }
     }
 
