@@ -5,6 +5,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.concurrent.SynchronousQueue;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -47,9 +48,13 @@ public class Encryption {
     }
 
     //the unencrypted should have the IV prepended to it; for efficiency
-    public static byte[] encrypt(byte[] unencrypted, SecretKey key, byte[] IV) throws InvalidKeyException {
+    public static byte[] encrypt(byte[] unencrypted, SecretKey key) throws InvalidKeyException {
         try {
-            return transform(unencrypted, key, IV, Cipher.ENCRYPT_MODE);
+            byte[] IV = generateIV();
+            byte[] encrypted = transform(unencrypted, key, IV, Cipher.ENCRYPT_MODE);
+            byte[] ivPlusEncrypted = new byte[IV.length + encrypted.length];
+            System.arraycopy(IV, 0, ivPlusEncrypted, 0, IV.length);
+            System.arraycopy(encrypted, 0, ivPlusEncrypted, IV.length, ivPlusEncrypted.length);
         } catch (BadPaddingException e) {
             e.printStackTrace();
         } catch (IllegalBlockSizeException e) {
@@ -60,10 +65,11 @@ public class Encryption {
 
     public static byte[] decrypt(byte[] encrypted, SecretKey key) throws InvalidKeyException, BadPaddingException, IllegalBlockSizeException{
         byte[] IV = Arrays.copyOf(encrypted, IV_SIZE);
-        return transform(encrypted, key, IV, Cipher.DECRYPT_MODE);
+        byte[] toTransform  = Arrays.copyOfRange(encrypted, IV_SIZE, encrypted.length);
+        return transform(toTransform, key, IV, Cipher.DECRYPT_MODE);
     }
 
-    public static byte[] transform(byte[] dataWithIV, SecretKey key, byte[] IV, int opmode) throws InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+    public static byte[] transform(byte[] data, SecretKey key, byte[] IV, int opmode) throws InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         Cipher c = null;
         try {
             c = Cipher.getInstance(cipherMode);
@@ -78,6 +84,6 @@ public class Encryption {
         } catch (InvalidAlgorithmParameterException e) {
             e.printStackTrace();
         }
-        return c.doFinal(dataWithIV, IV_SIZE, dataWithIV.length - IV_SIZE);
+        return c.doFinal(data);
     }
 }
