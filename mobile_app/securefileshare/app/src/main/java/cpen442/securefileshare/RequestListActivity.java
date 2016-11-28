@@ -257,8 +257,6 @@ public class RequestListActivity extends ListActivity
                             fileName);
                     fileAccessPermission.stage = FileAccessPermission.Stage.Read;
                     handleFileAccessPermissionResult(fileAccessPermission);
-
-                    jobToRemoveFromList = null;
                     break;
                 }
                 case Constants.JOB_GET_JOBS: {
@@ -387,6 +385,10 @@ public class RequestListActivity extends ListActivity
                         fileAccessInfo.filePath);
                 permissionHandler.writeToFile(fileAccessInfo);
                 Toast.makeText(this, "File Decrypted", Toast.LENGTH_SHORT).show();
+                jobsList.remove(jobToRemoveFromList);
+                myAdapter.remove(jobToRemoveFromList);
+                myAdapter.notifyDataSetChanged();
+                jobToRemoveFromList = null;
                 break;
             default:
                 Toast.makeText(this, "Shouldn't be here", Toast.LENGTH_SHORT).show();
