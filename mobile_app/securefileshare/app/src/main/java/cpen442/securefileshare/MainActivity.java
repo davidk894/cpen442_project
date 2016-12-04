@@ -6,13 +6,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.preference.PreferenceManager;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.view.menu.ExpandedMenuView;
 import android.view.View;
 import android.widget.Toast;
 
@@ -21,8 +17,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
 
 import javax.crypto.Cipher;
 
@@ -30,7 +24,6 @@ import cpen442.securefileshare.encryption.EncryptedFileFormat;
 import cpen442.securefileshare.encryption.EncryptedPlusKey;
 import cpen442.securefileshare.encryption.EncryptionException;
 import cpen442.securefileshare.encryption.FileEncyrption;
-import cpen442.securefileshare.encryption.FileFormat;
 import cpen442.securefileshare.encryption.FormatException;
 import cpen442.securefileshare.encryption.FileIO;
 import cpen442.securefileshare.encryption.HashByteWrapper;
